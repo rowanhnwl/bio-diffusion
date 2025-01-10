@@ -1326,6 +1326,12 @@ class EquivariantVariationalDiffusion(nn.Module):
         else:
             z = self.sample_combined_position_feature_noise(batch_index, node_mask, generate_x_only=generate_x_only)
 
+        # TASK ARITHMETIC: Create a task arithmetic vector for testing and add it to z0
+        rand_range = 4
+        ta_weight = 0.5
+        z_ta = 0.5 * rand_range * torch.ones(z.shape, device=z.device) - rand_range * torch.rand(z.shape, device=z.device)
+        z = self.add_ta_latent_vec(z, z_ta, ta_weight=ta_weight)
+
         self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
 
         # iteratively sample p(z_s | z_t) for `t = 1, ..., T`, with `s = t - 1`.
@@ -1374,6 +1380,9 @@ class EquivariantVariationalDiffusion(nn.Module):
                     self_condition=True
                 ).detach_()
 
+            # TASK ARITHMETIC: Add a task arithmetic matrix to constrain the diffusion
+            z = self.add_ta_latent_vec(z, z_ta, ta_weight=ta_weight)
+
         # lastly, sample p(x, h | z_0)
         x, h = self.sample_p_xh_given_z0(
             z_0=z,
@@ -1410,6 +1419,31 @@ class EquivariantVariationalDiffusion(nn.Module):
             out[0] = torch.cat([x, h["categorical"]], dim=-1)
 
         return out.squeeze(0), batch_index, node_mask
+    
+    # TASK ARITHMETIC: Add the constraint matrix
+    @torch.inference_mode()
+    @typechecked
+    def add_ta_latent_vec(
+        self,
+        z: torch.Tensor,
+        z_ta: torch.Tensor,
+        ta_weight: float=0.5 # Weight of the task arithmetic vector when summing
+    ):
+        """
+        Add the task arithmetic latent vector to z
+        Afterwards, shift the coordinate means to zero
+        """
+
+        z = torch.add(
+            z * (1 - ta_weight), # Latent vector
+            z_ta * ta_weight # Task arithmetic vector
+        )
+
+        # Reset the mean of the X, Y, Z coordinates to zero
+        mean_coords = torch.sum(z[:, :self.num_x_dims], dim=0, keepdim=True) / z.shape[0]
+        z[:, :self.num_x_dims] = z[:, :self.num_x_dims] - mean_coords
+
+        return z
     
     @torch.inference_mode()
     @typechecked
