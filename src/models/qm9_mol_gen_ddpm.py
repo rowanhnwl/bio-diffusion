@@ -28,7 +28,6 @@ from src.datamodules.components.edm.datasets_config import QM9_SECOND_HALF, QM9_
 from src.datamodules.components.edm import check_molecular_stability, get_bond_length_arrays
 from src.models.components.egnn import EGNNDynamics
 from src.models.components.variational_diffusion import EquivariantVariationalDiffusion
-from src.models.components.task_arithmetic import TaskArithmeticEVD
 
 from src.models.components.gcpnet import GCPNetDynamics
 from src.models import HALT_FILE_EXTENSION, CategoricalDistribution, PropertiesDistribution, Queue, batch_tensor_to_list, compute_mean_mad, get_grad_norm, log_grad_flow_lite, reverse_tensor

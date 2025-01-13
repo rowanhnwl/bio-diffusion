@@ -1330,8 +1330,7 @@ class EquivariantVariationalDiffusion(nn.Module):
             z = self.sample_combined_position_feature_noise(batch_index, node_mask, generate_x_only=generate_x_only)
 
         # TASK ARITHMETIC: Create a task arithmetic vector for testing and add it to z0
-        rand_range = 4
-        z_ta = 0.5 * rand_range * torch.ones(z.shape, device=z.device) - rand_range * torch.rand(z.shape, device=z.device)
+        z_ta = ta.get_rand_ta_mat(z)
         z = ta.add_ta_latent_vec(
             z,
             z_ta,

@@ -25,3 +25,18 @@ def add_ta_latent_vec(
     z[:, :space_dims] = z[:, :space_dims] - mean_coords
 
     return z
+
+def get_rand_ta_mat(
+    z0: torch.Tensor
+):
+    """
+    Get a random task arithmetic matrix for testing purposes
+    Randomly generated values in [-absmax(z0), absmax(z0)]
+    """
+
+    absmax_z0 = torch.max(torch.abs(z0))
+    
+    z_ta = 0.5 * torch.ones(z0.shape, device=z0.device) - torch.rand(z0.shape, device=z0.device)
+    z_ta *= absmax_z0
+
+    return z_ta
