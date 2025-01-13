@@ -28,6 +28,7 @@ from src.datamodules.components.edm.datasets_config import QM9_SECOND_HALF, QM9_
 from src.datamodules.components.edm import check_molecular_stability, get_bond_length_arrays
 from src.models.components.egnn import EGNNDynamics
 from src.models.components.variational_diffusion import EquivariantVariationalDiffusion
+from src.models.components.task_arithmetic import TaskArithmeticEVD
 
 from src.models.components.gcpnet import GCPNetDynamics
 from src.models import HALT_FILE_EXTENSION, CategoricalDistribution, PropertiesDistribution, Queue, batch_tensor_to_list, compute_mean_mad, get_grad_norm, log_grad_flow_lite, reverse_tensor
@@ -1064,6 +1065,7 @@ class QM9MoleculeGenerationDDPM(LightningModule):
         self,
         ddpm_mode: Literal["unconditional", "inpainting"],
         num_samples: int,
+        task_arithmetic_weight: float,
         num_nodes: Optional[TensorType["batch_size"]] = None,
         sanitize: bool = False,
         largest_frag: bool = False,
@@ -1120,6 +1122,7 @@ class QM9MoleculeGenerationDDPM(LightningModule):
             xh, batch_index, _ = self.ddpm.mol_gen_sample(
                 num_samples=num_samples,
                 num_nodes=num_nodes,
+                task_arithmetic_weight=task_arithmetic_weight,
                 device=self.device,
                 return_frames=num_timesteps if sample_chain else 1,
                 num_timesteps=num_timesteps,

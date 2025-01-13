@@ -29,3 +29,4 @@ relax: false
 num_resamplings: 1
 jump_length: 1
 num_timesteps: ???
+task_arithmetic_weight: 0.5

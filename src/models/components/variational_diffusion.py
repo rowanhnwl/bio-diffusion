@@ -14,6 +14,8 @@ from torch_geometric.data import Batch
 from torch_scatter import scatter
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from src.models.components import task_arithmetic as ta
+
 from src.models.components import centralize, num_nodes_to_batch_index
 from src.models import NumNodesDistribution, inflate_batch_array
 
@@ -1282,6 +1284,7 @@ class EquivariantVariationalDiffusion(nn.Module):
     def mol_gen_sample(
         self,
         num_samples: int,
+        task_arithmetic_weight: float,
         num_nodes: TensorType["batch_size"],
         device: Union[torch.device, str],
         return_frames: int = 1,
@@ -1328,9 +1331,12 @@ class EquivariantVariationalDiffusion(nn.Module):
 
         # TASK ARITHMETIC: Create a task arithmetic vector for testing and add it to z0
         rand_range = 4
-        ta_weight = 0.5
         z_ta = 0.5 * rand_range * torch.ones(z.shape, device=z.device) - rand_range * torch.rand(z.shape, device=z.device)
-        z = self.add_ta_latent_vec(z, z_ta, ta_weight=ta_weight)
+        z = ta.add_ta_latent_vec(
+            z,
+            z_ta,
+            task_arithmetic_weight
+        )
 
         self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
 
@@ -1381,7 +1387,11 @@ class EquivariantVariationalDiffusion(nn.Module):
                 ).detach_()
 
             # TASK ARITHMETIC: Add a task arithmetic matrix to constrain the diffusion
-            z = self.add_ta_latent_vec(z, z_ta, ta_weight=ta_weight)
+            z = ta.add_ta_latent_vec(
+                z,
+                z_ta,
+                task_arithmetic_weight
+            )
 
         # lastly, sample p(x, h | z_0)
         x, h = self.sample_p_xh_given_z0(
@@ -1419,31 +1429,6 @@ class EquivariantVariationalDiffusion(nn.Module):
             out[0] = torch.cat([x, h["categorical"]], dim=-1)
 
         return out.squeeze(0), batch_index, node_mask
-    
-    # TASK ARITHMETIC: Add the constraint matrix
-    @torch.inference_mode()
-    @typechecked
-    def add_ta_latent_vec(
-        self,
-        z: torch.Tensor,
-        z_ta: torch.Tensor,
-        ta_weight: float=0.5 # Weight of the task arithmetic vector when summing
-    ):
-        """
-        Add the task arithmetic latent vector to z
-        Afterwards, shift the coordinate means to zero
-        """
-
-        z = torch.add(
-            z * (1 - ta_weight), # Latent vector
-            z_ta * ta_weight # Task arithmetic vector
-        )
-
-        # Reset the mean of the X, Y, Z coordinates to zero
-        mean_coords = torch.sum(z[:, :self.num_x_dims], dim=0, keepdim=True) / z.shape[0]
-        z[:, :self.num_x_dims] = z[:, :self.num_x_dims] - mean_coords
-
-        return z
     
     @torch.inference_mode()
     @typechecked

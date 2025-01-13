@@ -170,6 +170,7 @@ def sample(cfg: DictConfig) -> Tuple[dict, dict]:
         ddpm_mode=cfg.model.diffusion_cfg.ddpm_mode,
         num_samples=cfg.num_samples,
         num_nodes=num_nodes,
+        task_arithmetic_weight=cfg.task_arithmetic_weight,
         sanitize=cfg.sanitize,
         largest_frag=not cfg.all_frags,
         add_hydrogens=False,
