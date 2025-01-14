@@ -1330,11 +1330,17 @@ class EquivariantVariationalDiffusion(nn.Module):
             z = self.sample_combined_position_feature_noise(batch_index, node_mask, generate_x_only=generate_x_only)
 
         # TASK ARITHMETIC: Create a task arithmetic vector for testing and add it to z0
-        z_ta = ta.get_rand_ta_mat(z)
+        z_ta = ta.get_preset_ta_mat(z)
+        w_ta = ta.get_scheduled_weight(
+            0,
+            num_timesteps,
+            init_w=task_arithmetic_weight,
+            method="exp"
+        )
         z = ta.add_ta_latent_vec(
             z,
             z_ta,
-            task_arithmetic_weight
+            task_arithmetic_weight=w_ta
         )
 
         self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
@@ -1386,10 +1392,16 @@ class EquivariantVariationalDiffusion(nn.Module):
                 ).detach_()
 
             # TASK ARITHMETIC: Add a task arithmetic matrix to constrain the diffusion
+            w_ta = ta.get_scheduled_weight(
+                num_timesteps - s,
+                num_timesteps,
+                init_w=task_arithmetic_weight,
+                method="exp"
+            )
             z = ta.add_ta_latent_vec(
                 z,
                 z_ta,
-                task_arithmetic_weight
+                task_arithmetic_weight=w_ta
             )
 
         # lastly, sample p(x, h | z_0)
