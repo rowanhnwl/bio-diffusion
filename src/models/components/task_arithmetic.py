@@ -8,6 +8,7 @@ def add_ta_latent_vec(
     z: torch.Tensor,
     z_ta: torch.Tensor,
     task_arithmetic_weight: float, # Weight of the task arithmetic vector when summing
+    method: str="add" # Weighted addition or mean
 ):
     """
     Add the task arithmetic latent vector to z
@@ -17,7 +18,7 @@ def add_ta_latent_vec(
     assert (task_arithmetic_weight >= 0 and task_arithmetic_weight <= 1.0), "Improper task arithmetic weighting"
 
     z = torch.add(
-        z,# * (1 - task_arithmetic_weight), # Latent vector
+        z if method == "add" else z * (1 - task_arithmetic_weight), # Latent space representation
         z_ta * task_arithmetic_weight # Task arithmetic vector
     )
 
