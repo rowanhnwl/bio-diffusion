@@ -17,7 +17,7 @@ def add_ta_latent_vec(
     assert (task_arithmetic_weight >= 0 and task_arithmetic_weight <= 1.0), "Improper task arithmetic weighting"
 
     z = torch.add(
-        z * (1 - task_arithmetic_weight), # Latent vector
+        z,# * (1 - task_arithmetic_weight), # Latent vector
         z_ta * task_arithmetic_weight # Task arithmetic vector
     )
 
@@ -76,12 +76,12 @@ def get_preset_ta_mat(
     """
 
     # Load the JSON
-    json_path = "src/models/components/task_arithmetic_matrices.json"
+    json_path = "src/models/components/json/task_arithmetic_combined_matrices.json"
     with open(json_path, "r") as f:
         matrices = json.load(f)
 
     # Specify a constraint
-    constraint = "XLogP"
+    constraint = "Caco2 Permeability:Lipophilicity"
 
     # Preset matrix
     ta_nonzero_mean = torch.tensor(

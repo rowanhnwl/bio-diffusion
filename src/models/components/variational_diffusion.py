@@ -25,6 +25,8 @@ from typeguard import typechecked
 from src.utils import make_and_save_network_graphviz_plot
 from src.utils.pylogger import get_pylogger
 
+from tqdm import tqdm
+
 patch_typeguard()  # use before @typechecked
 
 
@@ -1349,7 +1351,7 @@ class EquivariantVariationalDiffusion(nn.Module):
         self_cond = None
         s_array_self_cond = torch.full((num_samples, 1), fill_value=0, device=device) / (self.T if norm_with_original_timesteps else num_timesteps)
         out = torch.zeros((return_frames,) + z.size(), device=device)
-        for s in reversed(range(0, num_timesteps)):
+        for s in tqdm(reversed(range(0, num_timesteps))):
             s_array = torch.full((num_samples, 1), fill_value=s, device=device)
             t_array = s_array + 1
             s_array = s_array / (self.T if norm_with_original_timesteps else num_timesteps)
