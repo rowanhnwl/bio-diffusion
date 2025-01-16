@@ -5,7 +5,7 @@ from itertools import product
 import os
 from tqdm import tqdm
 
-def set_sdf_filename(
+def set_sdf_dirname(
     param_config
 ):
     
@@ -51,8 +51,6 @@ def gen_molecule(
         matrices = json.load(cmf)
     n_atoms = len(matrices[constraint_name])
 
-    # Get the full output path
-    out_path = os.path.join("./output", out_dir)
     out_path = f"'{out_path}'" # Escape ':' for hydra parsing
 
     # Fix the constraint name for hydra parsing
@@ -101,6 +99,8 @@ if __name__ == "__main__":
     with open(constraint_matrices_json_path, "r") as cmf:
         constraint_matrices_dict = json.load(cmf)
 
+    output_dir = config["output_dir"]
+
     constraint_names_l = list(constraint_matrices_dict.keys())
     
     timesteps_l = config["timesteps"]
@@ -124,5 +124,5 @@ if __name__ == "__main__":
     )
 
     for param_config in tqdm(params_configs):
-        out_dir = set_sdf_filename(param_config)
+        out_dir = os.path.join(output_dir, set_sdf_dirname(param_config))
         gen_molecule(param_config, out_dir)

@@ -5,5 +5,6 @@
     "add_interval": [3, 5],
     "add_method": ["add", "mean"],
     "schedule_method": ["lin", "exp"],
-    "constraint_matrices_json_path": "src/models/components/json/task_arithmetic_combined_matrices.json"
+    "constraint_matrices_json_path": "src/models/components/json/task_arithmetic_combined_matrices.json",
+    "output_dir": "./output"
 }
