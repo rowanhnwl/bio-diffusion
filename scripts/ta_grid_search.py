@@ -2,10 +2,8 @@ import subprocess
 import json
 import argparse
 from itertools import product
-
-# Params to add
-# init_w, final_w, gap, add_method, timesteps, weight_schedule_method
-# constraint_matrices_file_path
+import os
+from tqdm import tqdm
 
 def set_sdf_filename(
     param_config
@@ -23,7 +21,7 @@ def set_sdf_filename(
     ) = param_config
 
     sdf_name_list = []
-    sdf_name_list.append(constraint_name)
+    sdf_name_list.append(constraint_name.lower())
     sdf_name_list.append(f"ts-{timesteps}")
     sdf_name_list.append(f"iw-{init_weight}")
     sdf_name_list.append(f"fw-{final_weight}")
@@ -34,7 +32,8 @@ def set_sdf_filename(
     return "_".join(sdf_name_list)
 
 def gen_molecule(
-    param_config      
+    param_config,
+    out_dir  
 ):
     (
         constraint_name,
@@ -47,7 +46,46 @@ def gen_molecule(
         constraint_matrices_json_path
     ) = param_config
 
-    # ADD HYPERPARAMS TO THE YAML FILES
+    # Get the number of atoms
+    with open(constraint_matrices_json_path, "r") as cmf:
+        matrices = json.load(cmf)
+    n_atoms = len(matrices[constraint_name])
+
+    # Get the full output path
+    out_path = os.path.join("./output", out_dir)
+    out_path = f"'{out_path}'" # Escape ':' for hydra parsing
+
+    # Fix the constraint name for hydra parsing
+    constraint_name = f"'{constraint_name}'"
+
+    subprocess.run(
+        f"  python3 src/mol_gen_sample.py \
+            datamodule=edm_qm9 \
+            model=qm9_mol_gen_ddpm \
+            logger=csv \
+            trainer.accelerator=gpu \
+            trainer.devices=[0] \
+            ckpt_path=\"checkpoints/QM9/Unconditional/model_1_epoch_979-EMA.ckpt\" \
+            num_samples=1 \
+            num_nodes={n_atoms} \
+            all_frags=true \
+            sanitize=false \
+            relax=false \
+            num_resamplings=1 \
+            jump_length=1 \
+            num_timesteps={timesteps} \
+            output_dir={out_path} \
+            seed=123 \
+            constraint_name={constraint_name} \
+            init_weight={init_weight} \
+            final_weight={final_weight} \
+            add_interval={add_interval} \
+            add_method={add_method} \
+            schedule_method={schedule_method} \
+            constraint_matrices_json_path={constraint_matrices_json_path}",
+            shell=True,
+            stdout=subprocess.DEVNULL # Avoid printing
+    )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -85,5 +123,6 @@ if __name__ == "__main__":
         [constraint_matrices_json_path]
     )
 
-    for param_config in params_configs:
-        gen_molecule(param_config)
+    for param_config in tqdm(params_configs):
+        out_dir = set_sdf_filename(param_config)
+        gen_molecule(param_config, out_dir)

@@ -29,4 +29,12 @@ relax: false
 num_resamplings: 1
 jump_length: 1
 num_timesteps: ???
-task_arithmetic_weight: 0.5
+
+# TASK ARITHMETIC ARGUMENTS
+constraint_name: ???
+init_weight: ???
+final_weight: ???
+add_interval: ???
+add_method: ???
+schedule_method: ???
+constraint_matrices_json_path: ???

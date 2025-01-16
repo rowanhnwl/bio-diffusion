@@ -25,8 +25,6 @@ from typeguard import typechecked
 from src.utils import make_and_save_network_graphviz_plot
 from src.utils.pylogger import get_pylogger
 
-from tqdm import tqdm
-
 patch_typeguard()  # use before @typechecked
 
 
@@ -1286,7 +1284,7 @@ class EquivariantVariationalDiffusion(nn.Module):
     def mol_gen_sample(
         self,
         num_samples: int,
-        task_arithmetic_weight: float,
+        task_arithmetic_params: Tuple,
         num_nodes: TensorType["batch_size"],
         device: Union[torch.device, str],
         return_frames: int = 1,
@@ -1331,18 +1329,36 @@ class EquivariantVariationalDiffusion(nn.Module):
         else:
             z = self.sample_combined_position_feature_noise(batch_index, node_mask, generate_x_only=generate_x_only)
 
+        # TASK ARITHMETIC: Unload all task arithmetic parameters
+        (
+            constraint_name,
+            init_weight,
+            final_weight,
+            add_interval,
+            add_method,
+            schedule_method,
+            constraint_matrices_json_path
+        ) = task_arithmetic_params
+
         # TASK ARITHMETIC: Create a task arithmetic vector for testing and add it to z0
-        z_ta = ta.get_preset_ta_mat(z)
+        z_ta = ta.get_preset_ta_mat(
+            constraint_name=constraint_name,
+            constraint_matrices_json_path=constraint_matrices_json_path,
+            device=z.device
+        )
         w_ta = ta.get_scheduled_weight(
             0,
             num_timesteps,
-            init_w=task_arithmetic_weight,
-            method="exp"
+            init_w=init_weight,
+            final_w=final_weight,
+            gap=add_interval,
+            method=schedule_method
         )
         z = ta.add_ta_latent_vec(
             z,
             z_ta,
-            task_arithmetic_weight=w_ta
+            task_arithmetic_weight=w_ta,
+            method=add_method
         )
 
         self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
@@ -1351,7 +1367,7 @@ class EquivariantVariationalDiffusion(nn.Module):
         self_cond = None
         s_array_self_cond = torch.full((num_samples, 1), fill_value=0, device=device) / (self.T if norm_with_original_timesteps else num_timesteps)
         out = torch.zeros((return_frames,) + z.size(), device=device)
-        for s in tqdm(reversed(range(0, num_timesteps))):
+        for s in reversed(range(0, num_timesteps)):
             s_array = torch.full((num_samples, 1), fill_value=s, device=device)
             t_array = s_array + 1
             s_array = s_array / (self.T if norm_with_original_timesteps else num_timesteps)
@@ -1397,13 +1413,16 @@ class EquivariantVariationalDiffusion(nn.Module):
             w_ta = ta.get_scheduled_weight(
                 num_timesteps - s,
                 num_timesteps,
-                init_w=task_arithmetic_weight,
-                method="exp"
+                init_w=init_weight,
+                final_w=final_weight,
+                gap=add_interval,
+                method=schedule_method
             )
             z = ta.add_ta_latent_vec(
                 z,
                 z_ta,
-                task_arithmetic_weight=w_ta
+                task_arithmetic_weight=w_ta,
+                method=add_method
             )
 
         # lastly, sample p(x, h | z_0)

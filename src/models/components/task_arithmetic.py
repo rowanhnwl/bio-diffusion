@@ -68,7 +68,9 @@ def get_rand_ta_mat(
     return z_ta
 
 def get_preset_ta_mat(
-    z0: torch.Tensor,
+    constraint_name: str,
+    constraint_matrices_json_path: str,
+    device: str,
     space_dims: int=3 # Number of dimensions (X vector)
 ):
     """
@@ -77,17 +79,15 @@ def get_preset_ta_mat(
     """
 
     # Load the JSON
-    json_path = "src/models/components/json/task_arithmetic_combined_matrices.json"
-    with open(json_path, "r") as f:
-        matrices = json.load(f)
+    with open(constraint_matrices_json_path, "r") as cmf:
+        matrices = json.load(cmf)
 
-    # Specify a constraint
-    constraint = "Caco2 Permeability:Lipophilicity"
+    assert (constraint_name in matrices.keys()), "Invalid constraint name"
 
     # Preset matrix
     ta_nonzero_mean = torch.tensor(
-        matrices[constraint],
-        device=z0.device
+        matrices[constraint_name],
+        device=device
     )
     
     # Reset the mean of the X, Y, Z coordinates to zero

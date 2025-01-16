@@ -165,12 +165,23 @@ def sample(cfg: DictConfig) -> Tuple[dict, dict]:
     else:
         raise NotImplementedError(f"DDPM mode {cfg.model.diffusion_cfg.ddpm_mode} is currently not implemented.")
 
+    # TASK ARITHMETIC: Package all TA params together (except for the number of timesteps)
+    task_arithmetic_params = (
+        cfg.constraint_name,
+        cfg.init_weight,
+        cfg.final_weight,
+        cfg.add_interval,
+        cfg.add_method,
+        cfg.schedule_method,
+        cfg.constraint_matrices_json_path
+    )
+
     # note: in general, one's model should have a sample() function to call like this one       
     molecules = model.generate_molecules(
         ddpm_mode=cfg.model.diffusion_cfg.ddpm_mode,
         num_samples=cfg.num_samples,
         num_nodes=num_nodes,
-        task_arithmetic_weight=cfg.task_arithmetic_weight,
+        task_arithmetic_params=task_arithmetic_params,
         sanitize=cfg.sanitize,
         largest_frag=not cfg.all_frags,
         add_hydrogens=False,

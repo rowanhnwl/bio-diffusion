@@ -1064,7 +1064,7 @@ class QM9MoleculeGenerationDDPM(LightningModule):
         self,
         ddpm_mode: Literal["unconditional", "inpainting"],
         num_samples: int,
-        task_arithmetic_weight: float,
+        task_arithmetic_params: Tuple,
         num_nodes: Optional[TensorType["batch_size"]] = None,
         sanitize: bool = False,
         largest_frag: bool = False,
@@ -1121,7 +1121,7 @@ class QM9MoleculeGenerationDDPM(LightningModule):
             xh, batch_index, _ = self.ddpm.mol_gen_sample(
                 num_samples=num_samples,
                 num_nodes=num_nodes,
-                task_arithmetic_weight=task_arithmetic_weight,
+                task_arithmetic_params=task_arithmetic_params,
                 device=self.device,
                 return_frames=num_timesteps if sample_chain else 1,
                 num_timesteps=num_timesteps,
