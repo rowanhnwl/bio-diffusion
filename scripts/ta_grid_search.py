@@ -5,6 +5,8 @@ from itertools import product
 import os
 from tqdm import tqdm
 
+from src.analysis.task_arithmetic import constraint_analysis
+
 def set_sdf_dirname(
     param_config
 ):
@@ -75,7 +77,7 @@ def gen_molecule(
             jump_length=1 \
             num_timesteps={timesteps} \
             output_dir={out_path} \
-            seed=123 \
+            seed=42 \
             constraint_name={constraint_name} \
             init_weight={init_weight} \
             final_weight={final_weight} \
@@ -100,6 +102,10 @@ if __name__ == "__main__":
     constraint_matrices_json_path = config["constraint_matrices_json_path"]
     with open(constraint_matrices_json_path, "r") as cmf:
         constraint_matrices_dict = json.load(cmf)
+
+    constraint_threshold_json_path = config["constraint_threshold_json_path"]
+    with open(constraint_threshold_json_path, "r") as ctf:
+        constraint_threshold_dict = json.load(ctf)
 
     output_dir = config["output_dir"]
     molecules = config["molecules"] # Number of samples per param configuration
@@ -130,3 +136,12 @@ if __name__ == "__main__":
     for param_config in tqdm(params_configs):
         out_dir = os.path.join(output_dir, set_sdf_dirname(param_config))
         gen_molecule(param_config, out_dir)
+
+        constraint_name = param_config[0]
+
+        # Get the pass rate
+        constraint_analysis.constraint_eval(
+            constraint=constraint_name,
+            threshold=constraint_threshold_dict["Molecular Weight"]["threshold"],
+            sdf_path=out_dir
+        )

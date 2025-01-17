@@ -1,0 +1,38 @@
+{
+    "Caco2 Permeability": {
+        "threshold": -6.0,
+        "weight": 1
+    },
+    "Lipophilicity": {
+        "threshold": 2.0,
+        "weight": 1
+    }, 
+    "Solubility": {
+        "threshold": 0.0, 
+        "weight": 1
+    },
+    "Volume Distribution at Steady State": {
+        "threshold": 5.0,
+        "weight": 1
+    }, 
+    "Acute Toxicity": {
+        "threshold": 2.0,
+        "weight": 1
+    }, 
+    "TPSA": {
+        "threshold": 100.0,
+        "weight": 1
+    },
+    "XLogP": {
+        "threshold": 0.0, 
+        "weight": 1
+    }, 
+    "Molecular Weight": {
+        "threshold": 300.0, 
+        "weight": 1
+    }, 
+    "Rotatable Bond Count": {
+        "threshold": 10.0, 
+        "weight": 1
+    }
+}
