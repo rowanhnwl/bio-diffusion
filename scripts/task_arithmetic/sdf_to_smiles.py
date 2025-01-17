@@ -1,11 +1,35 @@
+from rdkit import Chem
 from rdkit.Chem.PandasTools import LoadSDF
-import argparse
+from rdkit.Chem import Descriptors, Crippen
+from matplotlib import pyplot as plt
+
+import os
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--fn", type=str, required=True)
-    args = parser.parse_args()
+    outpath = "output"
 
-    df = LoadSDF(args.fn, smilesName='SMILES')
+    logps = []
 
-    print(df["SMILES"])
+    for dirname in os.listdir(outpath):
+
+        if "lipophilicity" not in dirname:
+            continue
+
+        dirpath = os.path.join(outpath, dirname)
+
+        filename = os.listdir(dirpath)[0]
+        filepath = os.path.join(dirpath, filename)
+
+        df = LoadSDF(filepath, smilesName='SMILES')
+
+        for i, smi in enumerate(df["SMILES"]):
+
+            mol = Chem.MolFromSmiles(smi)
+            logp = Crippen.MolLogP(mol)
+
+            logps.append(logp)
+
+for i, l in enumerate(logps):
+    plt.scatter(i, l)
+
+plt.show()

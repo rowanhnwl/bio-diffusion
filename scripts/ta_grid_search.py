@@ -17,7 +17,8 @@ def set_sdf_dirname(
         add_interval,
         add_method,
         schedule_method,
-        _ # Unused path string
+        _, # Unused path string
+        _ # Unused molecules variable
     ) = param_config
 
     sdf_name_list = []
@@ -43,7 +44,8 @@ def gen_molecule(
         add_interval,
         add_method,
         schedule_method,
-        constraint_matrices_json_path
+        constraint_matrices_json_path,
+        molecules
     ) = param_config
 
     # Get the number of atoms
@@ -51,7 +53,7 @@ def gen_molecule(
         matrices = json.load(cmf)
     n_atoms = len(matrices[constraint_name])
 
-    out_path = f"'{out_path}'" # Escape ':' for hydra parsing
+    out_path = f"'{out_dir}'" # Escape ':' for hydra parsing
 
     # Fix the constraint name for hydra parsing
     constraint_name = f"'{constraint_name}'"
@@ -64,7 +66,7 @@ def gen_molecule(
             trainer.accelerator=gpu \
             trainer.devices=[0] \
             ckpt_path=\"checkpoints/QM9/Unconditional/model_1_epoch_979-EMA.ckpt\" \
-            num_samples=1 \
+            num_samples={molecules} \
             num_nodes={n_atoms} \
             all_frags=true \
             sanitize=false \
@@ -100,6 +102,7 @@ if __name__ == "__main__":
         constraint_matrices_dict = json.load(cmf)
 
     output_dir = config["output_dir"]
+    molecules = config["molecules"] # Number of samples per param configuration
 
     constraint_names_l = list(constraint_matrices_dict.keys())
     
@@ -120,7 +123,8 @@ if __name__ == "__main__":
         add_interval_l,
         add_method_l,
         schedule_method_l,
-        [constraint_matrices_json_path]
+        [constraint_matrices_json_path],
+        [molecules]
     )
 
     for param_config in tqdm(params_configs):

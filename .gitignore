@@ -176,6 +176,9 @@ epoch_*/
 data/EDM/GEOM*
 data/EDM/QM9*
 
+# Task arithmetic
+grid_searches
+
 # NFS
 .nfs*
 

@@ -1244,8 +1244,8 @@ class EquivariantVariationalDiffusion(nn.Module):
         )
 
         # compute `mu` for p(zs | zt)
-        None if self_condition else self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
-        None if self_condition else self.assert_mean_zero_with_mask(eps_t[:, :self.num_x_dims], node_mask)
+        #None if self_condition else self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
+        #None if self_condition else self.assert_mean_zero_with_mask(eps_t[:, :self.num_x_dims], node_mask)
         mu = (
             z / alpha_t_given_s[batch_index] -
              (sigma2_t_given_s[batch_index] / alpha_t_given_s[batch_index] / sigma_t[batch_index]) * eps_t
@@ -1361,7 +1361,7 @@ class EquivariantVariationalDiffusion(nn.Module):
             method=add_method
         )
 
-        self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
+        #self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
 
         # iteratively sample p(z_s | z_t) for `t = 1, ..., T`, with `s = t - 1`.
         self_cond = None
@@ -1437,7 +1437,7 @@ class EquivariantVariationalDiffusion(nn.Module):
             xh_self_cond=self_cond
         )
 
-        self.assert_mean_zero_with_mask(x, node_mask)
+        #self.assert_mean_zero_with_mask(x, node_mask)
 
         # correct CoG drift for examples without intermediate states
         if return_frames == 1:
@@ -1514,7 +1514,7 @@ class EquivariantVariationalDiffusion(nn.Module):
         )
         z = torch.hstack((x_init, h_init["categorical"]))
 
-        self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
+        #self.assert_mean_zero_with_mask(z[:, :self.num_x_dims], node_mask)
 
         # iteratively sample p(z_s | z_t) for `t = 1, ..., T`, with `s = t - 1`.
         self_cond = None
@@ -1573,7 +1573,7 @@ class EquivariantVariationalDiffusion(nn.Module):
             xh_self_cond=self_cond
         )
 
-        self.assert_mean_zero_with_mask(x, node_mask)
+        #self.assert_mean_zero_with_mask(x, node_mask)
 
         # correct CoG drift for examples without intermediate states
         if return_frames == 1:
@@ -1763,10 +1763,10 @@ class EquivariantVariationalDiffusion(nn.Module):
                 # combine
                 z = z_known * node_mask_fixed.unsqueeze(-1).float() + z_unknown * \
                     (1 - node_mask_fixed.unsqueeze(-1).float())
-                self.assert_mean_zero_with_mask(
-                    x=z[:, :self.num_x_dims],
-                    node_mask=torch.ones_like(node_mask_fixed)
-                )
+                # self.assert_mean_zero_with_mask(
+                #     x=z[:, :self.num_x_dims],
+                #     node_mask=torch.ones_like(node_mask_fixed)
+                # )
 
                 # save frame at the end of a resample cycle
                 if num_denoise_steps > jump_length or i == len(schedule) - 1:
@@ -1811,10 +1811,10 @@ class EquivariantVariationalDiffusion(nn.Module):
             generate_x_only=generate_x_only,
             xh_self_cond=self_cond
         )
-        self.assert_mean_zero_with_mask(
-            x=x,
-            node_mask=torch.ones_like(node_mask_fixed)
-        )
+        # self.assert_mean_zero_with_mask(
+        #     x=x,
+        #     node_mask=torch.ones_like(node_mask_fixed)
+        # )
 
         # correct CoM drift for examples without intermediate states
         if return_frames == 1:

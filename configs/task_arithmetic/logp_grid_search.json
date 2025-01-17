@@ -1,0 +1,11 @@
+{
+    "timesteps": [1000],
+    "molecules": 100,
+    "init_weight": [1],
+    "final_weight": [0.1],
+    "add_interval": [100],
+    "add_method": ["add"],
+    "schedule_method": ["none"],
+    "constraint_matrices_json_path": "src/models/components/json/lipophilicity_matrix.json",
+    "output_dir": "./output"
+}

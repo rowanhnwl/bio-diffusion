@@ -42,7 +42,7 @@ An example/default config file can be found at `configs/task_arithmetic/ta_grid_
 `output_dir`: Path to the desired output directory
 
 ### Description of output
-In the specified `output_dir`, a separate directory for each molecule's `.sdf` file will be created. The naming convention is as follows \
+In the specified `output_dir`, a separate directory for each molecule's `.sdf` file will be created. The naming convention is as follows
 ```
 <constraint>_ts-<timesteps>_iw-{init_weight}_fw-{final_weight}_ai-{add_interval}_am-{add_method}_sm-{schedule_method}
 ```

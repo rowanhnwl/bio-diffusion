@@ -17,10 +17,20 @@ def add_ta_latent_vec(
 
     assert (task_arithmetic_weight >= 0 and task_arithmetic_weight <= 1.0), "Improper task arithmetic weighting"
 
-    z = torch.add(
-        z if method == "add" else z * (1 - task_arithmetic_weight), # Latent space representation
-        z_ta * task_arithmetic_weight # Task arithmetic vector
-    )
+    n_samples = int(z.shape[0] / z_ta.shape[0])
+    n_atoms = z_ta.shape[0]
+
+    # For multiple samples, the number of rows in the latent space is n_samples * n_atoms
+    for i in range(n_samples):
+        if method == "add":
+            z[i * n_atoms:(i + 1) * n_atoms, :] = z[i * n_atoms:(i + 1) * n_atoms, :] + z_ta * task_arithmetic_weight
+        else:
+            z[i * n_atoms:(i + 1) * n_atoms, :] = z[i * n_atoms:(i + 1) * n_atoms, :] * (1 - task_arithmetic_weight) + z_ta * task_arithmetic_weight
+
+    # z = torch.add(
+    #     z if method == "add" else z * (1 - task_arithmetic_weight), # Latent space representation
+    #     z_ta * task_arithmetic_weight # Task arithmetic vector
+    # )
 
     return z
 
@@ -30,7 +40,7 @@ def get_scheduled_weight(
   init_w: float=0.5,
   final_w: float=0.01,
   gap: int=3,
-  method: str="lin" # Method of scheduling (linear, exponential, sigmoid, none)
+  method: str="lin" # Method of scheduling (linear, exponential, none)
 ):
     """
     Progressively decrease the task arithmetic weight for convergence purposes
@@ -49,6 +59,8 @@ def get_scheduled_weight(
         b = - timesteps / np.log(final_w / init_w)
 
         w_t = init_w * np.exp(-t / b)
+    elif method == "none":
+        w_t = init_w
 
     return w_t
 
@@ -70,8 +82,7 @@ def get_rand_ta_mat(
 def get_preset_ta_mat(
     constraint_name: str,
     constraint_matrices_json_path: str,
-    device: str,
-    space_dims: int=3 # Number of dimensions (X vector)
+    device: str
 ):
     """
     Create a preset matrix for testing purposes
@@ -89,9 +100,5 @@ def get_preset_ta_mat(
         matrices[constraint_name],
         device=device
     )
-    
-    # Reset the mean of the X, Y, Z coordinates to zero
-    mean_coords = torch.sum(ta_nonzero_mean[:, :space_dims], dim=0, keepdim=True) / ta_nonzero_mean.shape[0]
-    ta_nonzero_mean[:, :space_dims] = ta_nonzero_mean[:, :space_dims] - mean_coords
 
     return ta_nonzero_mean
