@@ -27,11 +27,6 @@ def add_ta_latent_vec(
         else:
             z[i * n_atoms:(i + 1) * n_atoms, :] = z[i * n_atoms:(i + 1) * n_atoms, :] * (1 - task_arithmetic_weight) + z_ta * task_arithmetic_weight
 
-    # z = torch.add(
-    #     z if method == "add" else z * (1 - task_arithmetic_weight), # Latent space representation
-    #     z_ta * task_arithmetic_weight # Task arithmetic vector
-    # )
-
     return z
 
 def get_scheduled_weight(
@@ -40,14 +35,14 @@ def get_scheduled_weight(
   init_w: float=0.5,
   final_w: float=0.01,
   gap: int=3,
-  method: str="lin" # Method of scheduling (linear, exponential, none)
+  method: str="lin" # Method of scheduling (linear, exponential, last, or none)
 ):
     """
     Progressively decrease the task arithmetic weight for convergence purposes
     """
 
     # Return 0 if the current time is in the gap
-    if t % gap != 0:
+    if method != "last" and t % gap != 0:
         return 0
 
     if method == "lin": # Linear scheduling
@@ -59,6 +54,8 @@ def get_scheduled_weight(
         b = - timesteps / np.log(final_w / init_w)
 
         w_t = init_w * np.exp(-t / b)
+    elif method == "last": # Add the full matrix only at the last timestep
+        w_t = 0 if t < timesteps - 1 else init_w
     elif method == "none":
         w_t = init_w
 

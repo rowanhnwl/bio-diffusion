@@ -5,8 +5,6 @@ from itertools import product
 import os
 from tqdm import tqdm
 
-from src.analysis.task_arithmetic import constraint_analysis
-
 def set_sdf_dirname(
     param_config
 ):
@@ -136,12 +134,3 @@ if __name__ == "__main__":
     for param_config in tqdm(params_configs):
         out_dir = os.path.join(output_dir, set_sdf_dirname(param_config))
         gen_molecule(param_config, out_dir)
-
-        constraint_name = param_config[0]
-
-        # Get the pass rate
-        constraint_analysis.constraint_eval(
-            constraint=constraint_name,
-            threshold=constraint_threshold_dict["Molecular Weight"]["threshold"],
-            sdf_path=out_dir
-        )
