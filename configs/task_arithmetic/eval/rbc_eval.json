@@ -1,0 +1,7 @@
+{
+    "eval_constraints": [
+        "Rotatable Bond Count"
+    ],
+    "sdf_dir_path": "output",
+    "out_path": "task_arithmetic_eval/rbc_eval.json"
+}

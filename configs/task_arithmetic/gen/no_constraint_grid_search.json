@@ -6,7 +6,7 @@
     "add_interval": [5],
     "add_method": ["add"],
     "schedule_method": ["none"],
-    "constraint_matrices_json_path": "src/models/components/json/lipophilicity_mol_weight_matrix.json",
+    "constraint_matrices_json_path": "src/models/components/json/tpsa_matrix.json",
     "constraint_threshold_json_path": "src/models/components/json/thresholds.json",
-    "output_dir": "./output"
+    "output_dir": "./no_constraint"
 }

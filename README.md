@@ -8,7 +8,9 @@ The task arithmetic logic is implemented for the QM9 Unconditional Generation ta
 ## Installation
 Follow the steps outlined in the original repository
 
-## Running
+## Molecule Generation
+
+### Grid search for molecule generation
 To run a grid search, create a JSON config with the following form
 ```
 {
@@ -23,13 +25,15 @@ To run a grid search, create a JSON config with the following form
 }
 ```
 
-The config can be placed in `configs/task_arithmetic`, and the grid search can be run with
+The config can be placed in `configs/task_arithmetic/gen`, and the grid search can be run with
 
 ```
-python3 scripts/ta_grid_search.py --config <PATH_TO_CONFIG>
+python3 scripts/task_arithmetic/ta_grid_search.py --config <PATH_TO_CONFIG>
 ```
 
-An example/default config file can be found at `configs/task_arithmetic/ta_grid_search.json`
+An example/default config file can be found at `configs/task_arithmetic/gen/ta_grid_search.json`
+
+To generate molecules without task arithmetic, run the same script but using the config file `configs/task_arithmetic/gen/no_constraint_grid_search.json`
 
 ### Description of parameters
 `timesteps`: The number of denoising iterations \
@@ -47,6 +51,56 @@ In the specified `output_dir`, a separate directory for each molecule's `.sdf` f
 <constraint>_ts-<timesteps>_iw-{init_weight}_fw-{final_weight}_ai-{add_interval}_am-{add_method}_sm-{schedule_method}
 ```
 
+## Evalutation
+To evaluate the molecules generated from a grid search, create a new config file with the form
+
+```
+{
+    "eval_constraints": [
+        ...
+    ],
+    "sdf_dir_path": <PATH_TO_GENERATED_MOLECULES>,
+    "out_path": <PATH_TO_EVAL_RESULTS>
+}
+```
+
+This config should be placed in `configs/task_arithmetic/eval`, and the evaluation can be run using
+
+```
+python3 scripts/task_arithmetic/constraint_analysis.py --config <PATH_TO_CONFIG>
+```
+
+### Description of parameters
+`eval_constraints`: This is a list that contains the constraints to be evaluated, for example `["Molecular Weight", "XLogP"]`
+`sdf_dir_path`: The path to the outputted SDF files containing the generated molecules
+`out_path`: The path to the JSON which will contain the evaluation results (must contain the name of the JSON)
+
+### Description of output
+At the `out_path`, there will be a JSON file with the following form
+
+```
+{
+    <PARAMETER_CONFIG_1>: {
+        <CONSTRAINT_1>: {
+            "mean": ...,
+            "std": ...,
+            "valid_smiles": ...,
+            "pass_rate": ...
+        },
+        <CONSTRAINT_2>: {
+            ...
+        }
+        ...
+    }
+    <PARAMETER_CONFIG_2>: {
+        ...
+    }
+    ...
+}
+```
+
+where `valid_smiles` is the number of generated molecules that can be converted to an RDKit `mol` object, and `pass_rate` is the fraction of generated molecules whose constraint value was above/below the specified threshold (depending on upper/lower bound)
+
 ## Important files
 Task arithmetic utility functions are located in `src/models/components/task_arithmetic.py`, and are applied to the diffusion logic in `src/models/component/variational_diffusion.py`
 
@@ -54,4 +108,7 @@ The diffusion model for the QM9 dataset is located at `src/models/qm9_mol_gen_dd
 
 To add more grid search parameters for task arithmetic, change the config file `configs/mol_gen_sample.yaml`
 
-The grid search script is located at `scripts/ta_grid_search.py`
+A JSON containing the thresholds and bound types (upper/lower) of the constraints can be found at `src/models/components/json/thresholds.json`
+
+The grid search script is located at `scripts/task_arithmetic/ta_grid_search.py`
+The evalutation script is located at `scripts/task_arithmetic/constraint_analysis.py`

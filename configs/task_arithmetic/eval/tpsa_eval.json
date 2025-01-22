@@ -3,5 +3,5 @@
         "TPSA"
     ],
     "sdf_dir_path": "output",
-    "out_path": "task_arithmetic_eval/molecular_weight_eval.json"
+    "out_path": "task_arithmetic_eval/tpsa_eval.json"
 }

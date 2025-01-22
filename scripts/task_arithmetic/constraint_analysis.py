@@ -14,6 +14,7 @@ def eval_mol_weight(
     smiles: list
 ):
     mws = []
+    valid_smiles = 0
 
     # Calculate the molecular weight
     for smi in smiles:
@@ -21,18 +22,20 @@ def eval_mol_weight(
 
         if mol:
             mw = Descriptors.MolWt(mol)
+            valid_smiles += 1
         else:
             print(f"Invalid SMILES string: {smi}")
             continue
 
         mws.append(mw)
 
-    return np.mean(mws), np.std(mws)
+    return np.mean(mws), np.std(mws), valid_smiles
 
 def eval_tpsa(
     smiles: list
 ):
     tpsas = []
+    valid_smiles = 0
 
     # Calculate the TPSAs
     for smi in smiles:
@@ -40,14 +43,57 @@ def eval_tpsa(
 
         if mol:
             tpsa = rdMolDescriptors.CalcTPSA(mol)
+            valid_smiles += 1
         else:
             print(f"Invalid SMILES string: {smi}")
             continue
 
         tpsas.append(tpsa)
 
-    return np.mean(tpsas), np.std(tpsas)
+    return np.mean(tpsas), np.std(tpsas), valid_smiles
 
+
+def eval_xlogp(
+    smiles: list
+):
+    xlogps = []
+    valid_smiles = 0
+
+    # Calculate the XLogPs
+    for smi in smiles:
+        mol = Chem.MolFromSmiles(smi)
+
+        if mol:
+            xlogp, mr = rdMolDescriptors.CalcCrippenDescriptors(mol)
+            valid_smiles += 1
+        else:
+            print(f"Invalid SMILES string: {smi}")
+            continue
+
+        xlogps.append(xlogp)
+
+    return np.mean(xlogps), np.std(xlogps), valid_smiles
+
+def eval_rbc(
+    smiles: list
+):
+    rbcs = []
+    valid_smiles = 0
+
+    # Calculate the XLogPs
+    for smi in smiles:
+        mol = Chem.MolFromSmiles(smi)
+
+        if mol:
+            rbc = rdMolDescriptors.CalcNumRotatableBonds(mol)
+            valid_smiles += 1
+        else:
+            print(f"Invalid SMILES string: {smi}")
+            continue
+
+        rbcs.append(rbc)
+
+    return np.mean(rbcs), np.std(rbcs), valid_smiles
 
 # Function to demultiplex the constraint
 def constraint_eval(
@@ -73,18 +119,26 @@ def constraint_eval(
             smiles = df["SMILES"]
         except:
             print("No available SMILES strings")
+            smiles = []
     
         for constraint in constraints:
-            mean, std = 0, 0
+            mean, std, valid_smiles = 0, 0, 0
 
-            if constraint == "Molecular Weight":
-                mean, std = eval_mol_weight(smiles)
+            if len(smiles) == 0:
+                pass
+            elif constraint == "Molecular Weight":
+                mean, std, valid_smiles = eval_mol_weight(smiles)
             elif constraint == "TPSA":
-                mean, std = eval_tpsa(smiles)
+                mean, std, valid_smiles = eval_tpsa(smiles)
+            elif constraint == "XLogP":
+                mean, std, valid_smiles = eval_xlogp(smiles)
+            elif constraint == "Rotatable Bond Count":
+                mean, std, valid_smiles = eval_rbc(smiles)
 
             out_dict[dir][constraint] = {
                 "mean": mean,
-                "std": std
+                "std": std,
+                "n_valid": valid_smiles
             }
 
     with open(out_path, "w") as f:
