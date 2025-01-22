@@ -11,9 +11,12 @@ import os
 import json
 
 def eval_mol_weight(
-    smiles: list
+    smiles: list,
+    threshold: float,
+    bound_type: str
 ):
     mws = []
+    good_mws_count = 0
     valid_smiles = 0
 
     # Calculate the molecular weight
@@ -27,14 +30,24 @@ def eval_mol_weight(
             print(f"Invalid SMILES string: {smi}")
             continue
 
+        if bound_type == "upper" and mw <= threshold:
+            good_mws_count += 1
+        elif bound_type == "lower" and mw >= threshold:
+            good_mws_count += 1
+
         mws.append(mw)
 
-    return np.mean(mws), np.std(mws), valid_smiles
+    pass_rate = good_mws_count / len(mws)
+
+    return np.mean(mws), np.std(mws), valid_smiles, pass_rate
 
 def eval_tpsa(
-    smiles: list
+    smiles: list,
+    threshold: float,
+    bound_type: str
 ):
     tpsas = []
+    good_tpsas_count = 0
     valid_smiles = 0
 
     # Calculate the TPSAs
@@ -48,15 +61,25 @@ def eval_tpsa(
             print(f"Invalid SMILES string: {smi}")
             continue
 
+        if bound_type == "upper" and tpsa <= threshold:
+            good_tpsas_count += 1
+        elif bound_type == "lower" and tpsa >= threshold:
+            good_tpsas_count += 1
+
         tpsas.append(tpsa)
 
-    return np.mean(tpsas), np.std(tpsas), valid_smiles
+    pass_rate = good_tpsas_count / len(tpsas)
+
+    return np.mean(tpsas), np.std(tpsas), valid_smiles, pass_rate
 
 
 def eval_xlogp(
-    smiles: list
+    smiles: list,
+    threshold: float,
+    bound_type: str
 ):
     xlogps = []
+    good_xlogps_count = 0
     valid_smiles = 0
 
     # Calculate the XLogPs
@@ -70,17 +93,27 @@ def eval_xlogp(
             print(f"Invalid SMILES string: {smi}")
             continue
 
+        if bound_type == "upper" and xlogp <= threshold:
+            good_xlogps_count += 1
+        elif bound_type == "lower" and xlogp >= threshold:
+            good_xlogps_count += 1
+
         xlogps.append(xlogp)
 
-    return np.mean(xlogps), np.std(xlogps), valid_smiles
+    pass_rate = good_xlogps_count / len(xlogps)
+
+    return np.mean(xlogps), np.std(xlogps), valid_smiles, pass_rate
 
 def eval_rbc(
-    smiles: list
+    smiles: list,
+    threshold: float,
+    bound_type: str
 ):
     rbcs = []
+    good_rbcs_count = 0
     valid_smiles = 0
 
-    # Calculate the XLogPs
+    # Calculate the RBCs
     for smi in smiles:
         mol = Chem.MolFromSmiles(smi)
 
@@ -91,13 +124,21 @@ def eval_rbc(
             print(f"Invalid SMILES string: {smi}")
             continue
 
+        if bound_type == "upper" and rbc <= threshold:
+            good_rbcs_count += 1
+        elif bound_type == "lower" and rbc >= threshold:
+            good_rbcs_count += 1
+
         rbcs.append(rbc)
 
-    return np.mean(rbcs), np.std(rbcs), valid_smiles
+    pass_rate = good_rbcs_count / len(rbcs)
+
+    return np.mean(rbcs), np.std(rbcs), valid_smiles, pass_rate
 
 # Function to demultiplex the constraint
 def constraint_eval(
     constraints: list,
+    threshold_info_list: list,
     sdf_dir_path: str,
     out_path: str
 ):
@@ -121,24 +162,30 @@ def constraint_eval(
             print("No available SMILES strings")
             smiles = []
     
-        for constraint in constraints:
-            mean, std, valid_smiles = 0, 0, 0
+        for i, constraint in enumerate(constraints):
+            mean, std, valid_smiles, pass_rate = 0, 0, 0, 0
+
+            threshold_info = threshold_info_list[i]
+
+            threshold = threshold_info["threshold"]
+            bound_type = threshold_info["bound"] # Upper or lower
 
             if len(smiles) == 0:
                 pass
             elif constraint == "Molecular Weight":
-                mean, std, valid_smiles = eval_mol_weight(smiles)
+                mean, std, valid_smiles, pass_rate = eval_mol_weight(smiles, threshold, bound_type)
             elif constraint == "TPSA":
-                mean, std, valid_smiles = eval_tpsa(smiles)
+                mean, std, valid_smiles, pass_rate = eval_tpsa(smiles, threshold, bound_type)
             elif constraint == "XLogP":
-                mean, std, valid_smiles = eval_xlogp(smiles)
+                mean, std, valid_smiles, pass_rate = eval_xlogp(smiles, threshold, bound_type)
             elif constraint == "Rotatable Bond Count":
-                mean, std, valid_smiles = eval_rbc(smiles)
+                mean, std, valid_smiles, pass_rate = eval_rbc(smiles, threshold, bound_type)
 
             out_dict[dir][constraint] = {
                 "mean": mean,
                 "std": std,
-                "n_valid": valid_smiles
+                "n_valid": valid_smiles,
+                "pass_rate": pass_rate
             }
 
     with open(out_path, "w") as f:
@@ -159,8 +206,14 @@ if __name__ == "__main__":
     sdf_dir_path = config["sdf_dir_path"]
     out_path = config["out_path"]
 
+    threshold_path = "src/models/components/json/thresholds.json"
+    with open(threshold_path, "r") as f:
+        thresholds = json.load(f)
+    threshold_info = [thresholds[c] for c in constraints]
+
     constraint_eval(
         constraints,
+        threshold_info,
         sdf_dir_path,
         out_path
     )

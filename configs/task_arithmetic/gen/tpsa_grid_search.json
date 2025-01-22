@@ -6,7 +6,7 @@
     "add_interval": [3, 5],
     "add_method": ["mean", "add"],
     "schedule_method": ["lin", "exp", "last", "none"],
-    "constraint_matrices_json_path": "src/models/components/json/tpsa_matrix.json",
+    "constraint_matrices_json_path": "matrices/tpsa.json",
     "constraint_threshold_json_path": "src/models/components/json/thresholds.json",
     "output_dir": "./output"
 }

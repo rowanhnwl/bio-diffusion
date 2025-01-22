@@ -42,7 +42,7 @@ To generate molecules without task arithmetic, run the same script but using the
 `add_interval`: The time interval at which the constraint matrix is added to the latent representation \
 `add_method`: Either `"add"` for $\boldsymbol{z}_{t-1} \sim p(\boldsymbol{z}_{t-1} | \boldsymbol{z}_t) + w_{ta}\boldsymbol{z}_{ta}$ or `"mean"` for $\boldsymbol{z}_{t-1} \sim p(\boldsymbol{z}_{t-1} | \boldsymbol{z}_t)(1 - w_{ta}) + w_{ta}\boldsymbol{z}_{ta}$ where $w_{ta}$ is the weight of the constraint matrix \
 `schedule_method`: Either `"lin"` for a linear decrease in $w_{ta}$ over time or `"exp"` for exponential decay over time \
-`constraint_matrices_json_path`: Path to the JSON file supplying the constraint matrix for each constraint or constraint combination. Two files are provided in `src/models/components/json`. One contains the matrices for the single constraints, and the other for the combined constraints
+`constraint_matrices_json_path`: Path to the JSON file supplying the constraint matrix for each constraint or constraint combination. All single and binary constraint matrices are located in the `matrices` directory
 `output_dir`: Path to the desired output directory
 
 ### Description of output
@@ -85,7 +85,7 @@ At the `out_path`, there will be a JSON file with the following form
             "mean": ...,
             "std": ...,
             "valid_smiles": ...,
-            "pass_rate": ...
+            "n_valid": ...
         },
         <CONSTRAINT_2>: {
             ...
@@ -99,7 +99,7 @@ At the `out_path`, there will be a JSON file with the following form
 }
 ```
 
-where `valid_smiles` is the number of generated molecules that can be converted to an RDKit `mol` object, and `pass_rate` is the fraction of generated molecules whose constraint value was above/below the specified threshold (depending on upper/lower bound)
+where `n_valid` is the number of generated molecules that can be converted to an RDKit `mol` object, and `pass_rate` is the fraction of generated molecules whose constraint value was above/below the specified threshold (depending on upper/lower bound)
 
 ## Important files
 Task arithmetic utility functions are located in `src/models/components/task_arithmetic.py`, and are applied to the diffusion logic in `src/models/component/variational_diffusion.py`
