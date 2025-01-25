@@ -179,6 +179,7 @@ data/EDM/QM9*
 # Task arithmetic
 grid_searches
 task_arithmetic_eval
+binary_analyses
 
 # NFS
 .nfs*

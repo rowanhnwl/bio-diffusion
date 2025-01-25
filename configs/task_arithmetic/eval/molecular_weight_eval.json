@@ -1,7 +1,0 @@
-{
-    "eval_constraints": [
-        "Molecular Weight"
-    ],
-    "sdf_dir_path": "grid_searches/molecular_weight",
-    "out_path": "task_arithmetic_eval/molecular_weight_eval.json"
-}

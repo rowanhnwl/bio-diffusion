@@ -1,7 +1,0 @@
-{
-    "eval_constraints": [
-        "XLogP"
-    ],
-    "sdf_dir_path": "output",
-    "out_path": "task_arithmetic_eval/xlogp_eval.json"
-}

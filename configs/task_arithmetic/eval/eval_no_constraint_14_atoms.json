@@ -1,0 +1,16 @@
+{
+    "eval_constraints": [
+        "Acute Toxicity",
+        "Caco2 Permeability",
+        "Lipophilicity",
+        "Molecular Weight",
+        "Rotatable Bond Count",
+        "Solubility",
+        "TPSA",
+        "Volume Distribution at Steady State",
+        "XLogP"
+    ],
+    "sdf_dir_path": "./output",
+    "out_path": "task_arithmetic_eval/benchmark/eval_no_constraint_14_atoms.json",
+    "datasets_dir": "data/task_arithmetic"
+}
