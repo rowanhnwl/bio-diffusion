@@ -37,8 +37,13 @@ Running generation across multiple constraints can be done by creating a config 
 
 There is a default config with the best parameters at `configs/task_arithmetic/gen/best_params.json`. This config is set up to evaluate on all binary constraint combinations, but feel free to change the list accordingly.
 
+The command to run based on the above config is
+```
+python scripts/task_arithmetic/ta_multi_constraint.py --config configs/task_arithmetic/gen/best_params.json
+```
+
 ### Changing thresholds
-After retraining with the new thresholds (in the [task arithmetic repository](https://github.com/d-subramanian/taskarithmetic)), make sure to **also** change the thresholds in `src/models/components/json/thresholds.json`
+After retraining with the new thresholds and weights (in the [task arithmetic repository](https://github.com/d-subramanian/taskarithmetic)), make sure to **also** change the thresholds and weights in `src/models/components/json/thresholds.json`
 
 ### Evaluation output
 For each constraint matrix, there will be a corresponding output JSON that shows how the generated molecules perform with respect to the constraint and threshold.
