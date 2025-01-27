@@ -10,6 +10,39 @@ Follow the steps outlined in the original repository
 
 ## Molecule Generation
 
+### Multiple constraints
+Running generation across multiple constraints can be done by creating a config file with the following form
+
+```
+{
+    "timesteps": ...,
+    "molecules": ...,
+    "init_weight": ...,
+    "final_weight": ...,
+    "add_interval": ...,
+    "add_method": ...,
+    "schedule_method": ...,
+    "constraint_matrices_json_paths": [
+        ...
+    ],
+    "output_dir": ...,
+    "eval_out_dir": ...,
+    "datasets_dir": ...,
+}
+```
+
+`output_dir`: Output path of the SDF files
+`eval_out_dir`: Output path of the evaluation results
+`datasets_dir`: Path to the TDC datasets for evaluation
+
+There is a default config with the best parameters at `configs/task_arithmetic/gen/best_params.json`. This config is set up to evaluate on all binary constraint combinations, but feel free to change the list accordingly.
+
+### Changing thresholds
+After retraining with the new thresholds (in the [task arithmetic repository](https://github.com/d-subramanian/taskarithmetic)), make sure to **also** change the thresholds in `src/models/components/json/thresholds.json`
+
+### Evaluation output
+For each constraint matrix, there will be a corresponding output JSON that shows how the generated molecules perform with respect to the constraint and threshold.
+
 ### Grid search for molecule generation
 To run a grid search, create a JSON config with the following form
 ```

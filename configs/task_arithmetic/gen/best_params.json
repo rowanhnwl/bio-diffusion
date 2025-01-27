@@ -26,5 +26,5 @@
     ],
     "output_dir": "./output",
     "eval_out_dir": "task_arithmetic_eval/metrics/binary",
-    "datasets_dir": "data/task_arithmetic"
+    "datasets_dir": "eval_datasets"
 }
