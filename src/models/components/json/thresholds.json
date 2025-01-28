@@ -35,7 +35,7 @@
         "bound": "upper"
     }, 
     "Molecular Weight": {
-        "threshold": 50.0, 
+        "threshold": 85.0, 
         "weight": 1,
         "bound": "upper"
     }, 

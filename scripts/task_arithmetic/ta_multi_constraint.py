@@ -55,7 +55,7 @@ def gen_molecule(
     constraint_name_r = list(matrix_dict.keys())[0]
     n_atoms = len(matrix_dict[constraint_name_r])
 
-    out_path_r = os.path.join(out_dir, set_sdf_dirname(param_config, constraint_name_r), "molecules")
+    out_path_r = os.path.join(out_dir, set_sdf_dirname(param_config, constraint_name_r), set_sdf_dirname(param_config, constraint_name_r))
     out_path = f"'{out_path_r}'" # Escape ':' for hydra parsing
 
     # Fix the constraint name for hydra parsing

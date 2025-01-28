@@ -12,136 +12,43 @@ import argparse
 import os
 import json
 
-from tqdm import tqdm
-from heapq import nlargest
+from copy import deepcopy
 
 from multiprocessing import Pool, Manager
 manager = Manager()
 
-def eval_mol_weight(
+def eval_calc_constraint(
     smiles: list,
+    constraint: str,
     threshold: float,
     bound_type: str
 ):
-    mws = []
-    good_mws_count = 0
-    valid_smiles = 0
+    smiles_results_dict = {smi: 0 for smi in smiles}
 
     # Calculate the molecular weight
     for smi in smiles:
         mol = Chem.MolFromSmiles(smi)
 
         if mol:
-            mw = Descriptors.MolWt(mol)
-            valid_smiles += 1
+            if constraint == "Molecular Weight":
+                val = Descriptors.MolWt(mol)
+            elif constraint == "TPSA":
+                val = rdMolDescriptors.CalcTPSA(mol)
+            elif constraint == "XLogP":
+                val, mr = rdMolDescriptors.CalcCrippenDescriptors(mol)
+            elif constraint == "Rotatable Bond Count":
+                val = rdMolDescriptors.CalcNumRotatableBonds(mol)
         else:
             print(f"Invalid SMILES string: {smi}")
             continue
 
-        if bound_type == "upper" and mw <= threshold:
-            good_mws_count += 1
-        elif bound_type == "lower" and mw >= threshold:
-            good_mws_count += 1
+        if bound_type == "upper" and val <= threshold:
+            if not (constraint == "TPSA" and val == 0):
+                smiles_results_dict[smi] = 1
+        elif bound_type == "lower" and val >= threshold:
+            smiles_results_dict[smi] = 1
 
-        mws.append(mw)
-
-    pass_rate = good_mws_count / len(mws)
-
-    return np.mean(mws), np.std(mws), valid_smiles, pass_rate
-
-def eval_tpsa(
-    smiles: list,
-    threshold: float,
-    bound_type: str
-):
-    tpsas = []
-    good_tpsas_count = 0
-    valid_smiles = 0
-
-    # Calculate the TPSAs
-    for smi in smiles:
-        mol = Chem.MolFromSmiles(smi)
-
-        if mol:
-            tpsa = rdMolDescriptors.CalcTPSA(mol)
-            valid_smiles += 1
-        else:
-            print(f"Invalid SMILES string: {smi}")
-            continue
-
-        if bound_type == "upper" and tpsa <= threshold and tpsa > 0:
-            good_tpsas_count += 1
-        elif bound_type == "lower" and tpsa >= threshold:
-            good_tpsas_count += 1
-
-        tpsas.append(tpsa)
-
-    pass_rate = good_tpsas_count / len(tpsas)
-
-    return np.mean(tpsas), np.std(tpsas), valid_smiles, pass_rate
-
-
-def eval_xlogp(
-    smiles: list,
-    threshold: float,
-    bound_type: str
-):
-    xlogps = []
-    good_xlogps_count = 0
-    valid_smiles = 0
-
-    # Calculate the XLogPs
-    for smi in smiles:
-        mol = Chem.MolFromSmiles(smi)
-
-        if mol:
-            xlogp, mr = rdMolDescriptors.CalcCrippenDescriptors(mol)
-            valid_smiles += 1
-        else:
-            print(f"Invalid SMILES string: {smi}")
-            continue
-
-        if bound_type == "upper" and xlogp <= threshold:
-            good_xlogps_count += 1
-        elif bound_type == "lower" and xlogp >= threshold:
-            good_xlogps_count += 1
-
-        xlogps.append(xlogp)
-
-    pass_rate = good_xlogps_count / len(xlogps)
-
-    return np.mean(xlogps), np.std(xlogps), valid_smiles, pass_rate
-
-def eval_rbc(
-    smiles: list,
-    threshold: float,
-    bound_type: str
-):
-    rbcs = []
-    good_rbcs_count = 0
-    valid_smiles = 0
-
-    # Calculate the RBCs
-    for smi in smiles:
-        mol = Chem.MolFromSmiles(smi)
-
-        if mol:
-            rbc = rdMolDescriptors.CalcNumRotatableBonds(mol)
-            valid_smiles += 1
-        else:
-            print(f"Invalid SMILES string: {smi}")
-            continue
-
-        if bound_type == "upper" and rbc <= threshold:
-            good_rbcs_count += 1
-        elif bound_type == "lower" and rbc >= threshold:
-            good_rbcs_count += 1
-
-        rbcs.append(rbc)
-
-    pass_rate = good_rbcs_count / len(rbcs)
-
-    return np.mean(rbcs), np.std(rbcs), valid_smiles, pass_rate
+    return smiles_results_dict
 
 # Structure-based evaluation
 def tdc_evaluation(
@@ -151,8 +58,8 @@ def tdc_evaluation(
         list_of_gen_mols,
         meet_dataset_mols,
         fail_dataset_mols,
-        shared_met_list,
-        shared_fail_list,
+        shared_met_dict,
+        shared_fail_dict,
     ) = args
 
     fpgen = AllChem.GetRDKitFPGenerator()
@@ -191,8 +98,8 @@ def tdc_evaluation(
                     fail_sim.append(sim)
             
             # Append the list of similarity scores to each list
-            shared_met_list.append(met_sim)            
-            shared_fail_list.append(fail_sim)
+            shared_met_dict[smiles] = met_sim       
+            shared_fail_dict[smiles] = fail_sim
 
 def split_smiles(
     smiles: list,
@@ -220,8 +127,8 @@ def get_structure_eval(
         n_cpu
     )
 
-    gen_mol_met_sim = manager.list()
-    gen_mol_fail_sim = manager.list()
+    gen_mol_met_sim = manager.dict()
+    gen_mol_fail_sim = manager.dict()
 
     with Pool(n_cpu) as p:
         p.map(
@@ -239,31 +146,17 @@ def get_structure_eval(
         )
 
     # Get the rates at which the generated-real pairs have a similarity over a given threshold
-    gen_mol_met_sim_vec = np.array(list(gen_mol_met_sim)).flatten()
-    gen_mol_fail_sim_vec = np.array(list(gen_mol_fail_sim)).flatten()
+    gen_mol_met_sim = dict(gen_mol_met_sim)
+    gen_mol_fail_sim = dict(gen_mol_fail_sim)
 
-    sim_threshold = 0.2
+    smiles_results_dict = {smi: 0 for smi in smiles}
+    sim_thresh = 0.2
 
-    high_sim_fail_count = 0
-    high_sim_pass_count = 0
+    for smi in smiles:
+        if np.max(gen_mol_met_sim[smi]) >= sim_thresh:
+            smiles_results_dict[smi] = 1
 
-    for sim_score in gen_mol_met_sim_vec:
-        if sim_score >= sim_threshold:
-            high_sim_pass_count += 1
-
-    for sim_score in gen_mol_fail_sim_vec:
-        if sim_score >= sim_threshold:
-            high_sim_fail_count += 1
-
-    # Get the number of generated molecules that have AT LEAST ONE pairing with a similarity score over the threshold
-    n_good = 0
-    for mol_sim_scores in list(gen_mol_met_sim):
-        for sim_score in mol_sim_scores:
-            if sim_score >= sim_threshold:
-                n_good += 1
-                break
-
-    return high_sim_pass_count / len(gen_mol_met_sim_vec), high_sim_fail_count / len(gen_mol_fail_sim_vec), n_good
+    return smiles_results_dict
 
 def eval_dataset(
     constraint: str,
@@ -305,6 +198,27 @@ def eval_dataset(
     
     return mols_that_meet_threshold, mols_that_fail_threshold
 
+# Get the number of generated molecules that satisfy ALL constraints
+def get_multi_constraint_success_rate(
+    results_dicts,
+    n_molecules  
+):
+    smiles = list(results_dicts[0].keys())
+
+    good_count = 0
+
+    for smi in smiles:
+        satisfies = True
+        
+        for r_dict in results_dicts:
+            if r_dict[smi] == 0:
+                satisfies = False
+
+        if satisfies:
+            good_count += 1
+
+    return good_count / n_molecules
+
 # Function to demultiplex the constraint
 def constraint_eval(
     constraints: list,
@@ -327,32 +241,32 @@ def constraint_eval(
 
         df = LoadSDF(full_sdf_path, smilesName='SMILES')
 
+        results_dicts = []
+
         try:
-            smiles = df["SMILES"]
+            smiles = list(set(df["SMILES"])) # Make sure there are no duplicate SMILES strings
         except:
             print("No available SMILES strings")
             smiles = []
     
         for i, constraint in enumerate(constraints):
-            mean, std, valid_smiles, pass_rate = 0, 0, 0, 0
 
             threshold_info = threshold_info_list[i]
 
             threshold = threshold_info["threshold"]
             bound_type = threshold_info["bound"] # Upper or lower
 
-            calc = True
-
             if len(smiles) == 0:
                 pass
-            elif constraint == "Molecular Weight":
-                mean, std, valid_smiles, pass_rate = eval_mol_weight(smiles, threshold, bound_type)
-            elif constraint == "TPSA":
-                mean, std, valid_smiles, pass_rate = eval_tpsa(smiles, threshold, bound_type)
-            elif constraint == "XLogP":
-                mean, std, valid_smiles, pass_rate = eval_xlogp(smiles, threshold, bound_type)
-            elif constraint == "Rotatable Bond Count":
-                mean, std, valid_smiles, pass_rate = eval_rbc(smiles, threshold, bound_type)
+            elif constraint in ["Molecular Weight", "TPSA", "XLogP", "Rotatable Bond Count"]:
+                results_dict = eval_calc_constraint(
+                    smiles,
+                    constraint,
+                    threshold,
+                    bound_type
+                )
+
+                results_dicts.append(deepcopy(results_dict))
             else: # NEED TO USE STRUCTURAL SIMILARITY
 
                 # Split the dataset by passing/failing the threshold
@@ -363,28 +277,37 @@ def constraint_eval(
                     datasets_dir
                 )
 
-                high_sim_pass_count, high_sim_fail_count, n_good = get_structure_eval(
+                results_dict = get_structure_eval(
                     smiles,
                     mols_that_meet_threshold,
                     mols_that_fail_threshold
                 )
 
-                calc = False
+                results_dicts.append(deepcopy(results_dict))
 
-            if calc:
+            if len(smiles) != 0:
+
+                n_passing = np.sum(list(results_dict.values()))
+
                 out_dict[dir][constraint] = {
-                    "mean": mean,
-                    "std": std,
-                    "n_valid": valid_smiles,
-                    "pass_rate": pass_rate
+                    "P(meets threshold)": n_passing / len(smiles),
+                    "n_distinct": len(smiles),
+                    "Threshold": threshold,
+                    "Bound type": bound_type
                 }
             else:
+
                 out_dict[dir][constraint] = {
-                    "high_sim_pass_rate": high_sim_pass_count,
-                    "high_sim_fail_rate": high_sim_fail_count,
-                    "n_valid": len(smiles),
-                    "n_good": n_good
+                    "P(meets threshold)": 0,
+                    "n_distinct": 0,
+                    "Threshold": threshold,
+                    "Bound type": bound_type
                 }
+
+        # Create a new field to show the success rate across BOTH constraints
+        if len(constraints) > 1:
+            joined_constraint_name = ":".join(constraints)
+            out_dict[dir][joined_constraint_name] = get_multi_constraint_success_rate(results_dicts, len(smiles))
 
     with open(out_path, "w") as f:
         json.dump(out_dict, f, indent=3)

@@ -1,12 +1,21 @@
 {
     "timesteps": 1000,
     "molecules": 250,
-    "init_weight": 1,
+    "init_weight": 0.75,
     "final_weight": 0.01,
     "add_interval": 5,
     "add_method": "mean",
     "schedule_method": "exp",
     "constraint_matrices_json_paths": [
+        "matrices/single/acute_toxicity.json",
+        "matrices/single/caco2_permeability.json",
+        "matrices/single/lipophilicity.json",
+        "matrices/single/molecular_weight.json",
+        "matrices/single/rotatable_bond_count.json",
+        "matrices/single/solubility.json",
+        "matrices/single/tpsa.json",
+        "matrices/single/vdss.json",
+        "matrices/single/xlogp.json",
         "matrices/binary/acute_toxicity_AND_caco2_permeability.json", 
         "matrices/binary/caco2_permeability_AND_lipophilicity.json", 
         "matrices/binary/lipophilicity_AND_acute_toxicity.json", 
@@ -25,6 +34,6 @@
         "matrices/binary/xlogp_AND_caco2_permeability.json"
     ],
     "output_dir": "./output",
-    "eval_out_dir": "task_arithmetic_eval/metrics/binary",
+    "eval_out_dir": "task_arithmetic_eval/metrics/best_iw0.75",
     "datasets_dir": "eval_datasets"
 }
