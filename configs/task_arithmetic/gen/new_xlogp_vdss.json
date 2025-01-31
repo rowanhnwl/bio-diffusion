@@ -1,0 +1,20 @@
+{
+    "timesteps": 1000,
+    "molecules": 250,
+    "init_weight": 0,
+    "final_weight": 0,
+    "add_interval": 5,
+    "add_method": "add",
+    "schedule_method": "none",
+    "constraint_matrices_json_paths": [
+        "matrices/single_1/vdss.json",
+        "matrices/single_1/xlogp.json",
+        "matrices/binary_1/lipophilicity_AND_vdss.json", 
+        "matrices/binary_1/lipophilicity_AND_xlogp.json",
+        "matrices/binary_1/vdss_AND_caco2_permeability.json", 
+        "matrices/binary_1/xlogp_AND_caco2_permeability.json"
+    ],
+    "output_dir": "./grid_searches/n1_best",
+    "eval_out_dir": "task_arithmetic_eval/n1_best",
+    "datasets_dir": "eval_datasets"
+}

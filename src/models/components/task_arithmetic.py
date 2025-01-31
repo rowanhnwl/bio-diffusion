@@ -77,24 +77,16 @@ def get_rand_ta_mat(
     return z_ta
 
 def get_preset_ta_mat(
-    constraint_name: str,
-    constraint_matrices_json_path: str,
+    constraint_matrix: list,
     device: str
 ):
     """
     Create a preset matrix for testing purposes
-    Set the X, Y, Z means to zero before returning
     """
-
-    # Load the JSON
-    with open(constraint_matrices_json_path, "r") as cmf:
-        matrices = json.load(cmf)
-
-    assert (constraint_name in matrices.keys()), "Invalid constraint name"
 
     # Preset matrix
     ta_nonzero_mean = torch.tensor(
-        matrices[constraint_name],
+        constraint_matrix,
         device=device
     )
 

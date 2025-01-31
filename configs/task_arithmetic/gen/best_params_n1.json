@@ -29,7 +29,7 @@
         "matrices/binary_1/vdss_AND_caco2_permeability.json", 
         "matrices/binary_1/xlogp_AND_caco2_permeability.json"
     ],
-    "output_dir": "./grid_searches/n1_best",
-    "eval_out_dir": "task_arithmetic_eval/metrics/n1_best",
+    "output_dir": "./grid_searches/test",
+    "eval_out_dir": "task_arithmetic_eval/test",
     "datasets_dir": "eval_datasets"
 }

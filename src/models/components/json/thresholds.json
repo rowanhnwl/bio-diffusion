@@ -15,7 +15,7 @@
         "bound": "lower"
     },
     "Volume Distribution at Steady State": {
-        "threshold": 5.0,
+        "threshold": 10.0,
         "weight": 1,
         "bound": "upper"
     }, 
@@ -30,7 +30,7 @@
         "bound": "upper"
     },
     "XLogP": {
-        "threshold": -0.5, 
+        "threshold": -0.0, 
         "weight": 1,
         "bound": "upper"
     }, 

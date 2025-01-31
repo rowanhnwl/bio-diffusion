@@ -181,6 +181,7 @@ grid_searches
 task_arithmetic_eval
 binary_analyses
 scripts/task_arithmetic/eval/plotting
+figs
 
 # NFS
 .nfs*

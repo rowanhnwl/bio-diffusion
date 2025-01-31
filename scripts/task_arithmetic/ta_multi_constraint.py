@@ -5,6 +5,7 @@ import os
 from tqdm import tqdm
 
 from eval.constraint_analysis import *
+from gen_binary_matrix import generate_binary_matrix
 
 def set_sdf_dirname(
     param_config,
@@ -18,6 +19,7 @@ def set_sdf_dirname(
         add_interval,
         add_method,
         schedule_method,
+        _,
         _,
         _
     ) = param_config
@@ -44,22 +46,22 @@ def gen_molecule(
         add_interval,
         add_method,
         schedule_method,
-        matrix_path,
+        constraint_matrix,
+        constraint_info,
         molecules
     ) = param_config
-
-    # Get the number of atoms
-    with open(matrix_path, "r") as cmf:
-        matrix_dict = json.load(cmf)
     
-    constraint_name_r = list(matrix_dict.keys())[0]
-    n_atoms = len(matrix_dict[constraint_name_r])
+    constraints = [list(d.keys())[0] for d in constraint_info]
+    constraint_name_r = ":".join(constraints)
+    n_atoms = len(constraint_matrix)
 
     out_path_r = os.path.join(out_dir, set_sdf_dirname(param_config, constraint_name_r), set_sdf_dirname(param_config, constraint_name_r))
     out_path = f"'{out_path_r}'" # Escape ':' for hydra parsing
 
     # Fix the constraint name for hydra parsing
     constraint_name = f"'{constraint_name_r}'"
+
+    # TO DO: HANDLE NO CONSTRAINT
 
     subprocess.run(
         f"  python3 src/mol_gen_sample.py \
@@ -85,7 +87,7 @@ def gen_molecule(
             add_interval={add_interval} \
             add_method={add_method} \
             schedule_method={schedule_method} \
-            constraint_matrices_json_path={matrix_path}",
+            constraint_matrix={constraint_matrix}",
             shell=True,
             stdout=subprocess.DEVNULL # Avoid printing
     )
@@ -102,7 +104,9 @@ if __name__ == "__main__":
     with open(config_path, "r") as cf:
         config = json.load(cf)
 
-    constraint_matrices_json_paths = config["constraint_matrices_json_paths"]
+    constraint_info = config["constraint_info"]
+    min_smiles_len = config["min_train_smiles_length"]
+    binary = len(constraint_info) > 1
 
     output_dir = config["output_dir"]
     molecules = config["molecules"] # Number of samples per param configuration
@@ -119,39 +123,48 @@ if __name__ == "__main__":
     eval_out_dir = config["eval_out_dir"]
     datasets_dir = config["datasets_dir"]
 
-    threshold_path = "src/models/components/json/thresholds.json"
-    with open(threshold_path, "r") as f:
-        thresholds = json.load(f)
+    # Get the constraint matrix
+    if binary:
+        constraint_matrix = generate_binary_matrix(
+            constraint_info,
+            min_smiles_len,
+            datasets_dir
+        )
+
+    # Implement for single
+
+    os.mkdir("tmp_matrix")
+    tmp_dict = {}
+    tmp_dict["matrix"] = constraint_matrix
+    with open("tmp_matrix/matrix.", "w") as f:
 
     if not os.path.exists(eval_out_dir):
         os.makedirs(eval_out_dir)
 
-    params_configs = [
-        (
-            timesteps,
-            init_weight,
-            final_weight,
-            add_interval,
-            add_method,
-            schedule_method,
-            path,
-            molecules
-        ) for path in constraint_matrices_json_paths
-    ]
+    param_config = (
+        timesteps,
+        init_weight,
+        final_weight,
+        add_interval,
+        add_method,
+        schedule_method,
+        constraint_matrix,
+        constraint_info,
+        molecules
+    )
 
-    for param_config in tqdm(params_configs):
-        sdf_dir_path, constraint_name = gen_molecule(param_config, output_dir)
-        matrix_path = param_config[6]
+    #for param_config in tqdm(params_configs):
+    sdf_dir_path, constraint_name = gen_molecule(param_config, output_dir)
 
-        eval_out_path = os.path.join(eval_out_dir, os.path.basename(matrix_path))
+    eval_out_path = os.path.join(eval_out_dir, constraint_name + ".json")
 
-        constraint_name_list = constraint_name.split(":")
-        threshold_info = [thresholds[c] for c in constraint_name_list]
+    constraint_name_list = constraint_name.split(":")
+    threshold_info = [list(d.values())[0] for d in constraint_info]
 
-        constraint_eval(
-            constraint_name_list,
-            threshold_info,
-            sdf_dir_path,
-            datasets_dir,
-            eval_out_path
-        )
+    constraint_eval(
+        constraint_name_list,
+        threshold_info,
+        sdf_dir_path,
+        datasets_dir,
+        eval_out_path
+    )

@@ -39,10 +39,12 @@ def get_config_attributes(results_dict):
 if __name__ == "__main__":
     
     eval_paths = [
-        "task_arithmetic_eval/n1_no_constraint"
+        "task_arithmetic_eval/n1_best",
+        "task_arithmetic_eval/n2_best",
+        "task_arithmetic_eval/n3_best"
     ]
 
-    out_path = "task_arithmetic_eval/summary/n3_no_constraint_summary.json"
+    out_path = "task_arithmetic_eval/summary/n3_constraint_summary.json"
 
     if not os.path.exists(os.path.dirname(out_path)):
         os.makedirs(os.path.dirname(out_path))

@@ -173,7 +173,7 @@ def sample(cfg: DictConfig) -> Tuple[dict, dict]:
         cfg.add_interval,
         cfg.add_method,
         cfg.schedule_method,
-        cfg.constraint_matrices_json_path
+        cfg.constraint_matrix
     )
 
     # note: in general, one's model should have a sample() function to call like this one       

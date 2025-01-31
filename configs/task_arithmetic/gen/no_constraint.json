@@ -8,10 +8,28 @@
     "schedule_method": "none",
     "constraint_matrices_json_paths": [
         "matrices/single_1/acute_toxicity.json",
+        "matrices/single_1/caco2_permeability.json",
+        "matrices/single_1/lipophilicity.json",
+        "matrices/single_1/rotatable_bond_count.json",
         "matrices/single_1/solubility.json",
-        "matrices/single_1/xlogp.json"
+        "matrices/single_1/tpsa.json",
+        "matrices/single_1/vdss.json",
+        "matrices/single_1/xlogp.json",
+        "matrices/binary_1/acute_toxicity_AND_caco2_permeability.json", 
+        "matrices/binary_1/lipophilicity_AND_acute_toxicity.json", 
+        "matrices/binary_1/lipophilicity_AND_caco2_permeability.json", 
+        "matrices/binary_1/lipophilicity_AND_rotatable_bond_count.json", 
+        "matrices/binary_1/lipophilicity_AND_solubility.json", 
+        "matrices/binary_1/lipophilicity_AND_tpsa.json", 
+        "matrices/binary_1/lipophilicity_AND_vdss.json", 
+        "matrices/binary_1/lipophilicity_AND_xlogp.json",
+        "matrices/binary_1/rotatable_bond_count_AND_caco2_permeability.json", 
+        "matrices/binary_1/solubility_AND_caco2_permeability.json", 
+        "matrices/binary_1/tpsa_AND_caco2_permeability.json", 
+        "matrices/binary_1/vdss_AND_caco2_permeability.json", 
+        "matrices/binary_1/xlogp_AND_caco2_permeability.json"
     ],
-    "output_dir": "./grid_searches/n1_no_constraint",
-    "eval_out_dir": "task_arithmetic_eval/metrics/n1_no_constraint",
+    "output_dir": "./grid_searches/n3_no_constraint",
+    "eval_out_dir": "task_arithmetic_eval/n3_no_constraint",
     "datasets_dir": "eval_datasets"
 }

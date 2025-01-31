@@ -1,0 +1,11 @@
+{
+    "Caco2 Permeability": "Caco2_Wang",
+    "Lipophilicity": "Lipophilicity_AstraZeneca",
+    "Solubility": "Solubility_AqSolDB",
+    "Acute Toxicity": "LD50_Zhu",
+    "Volume Distribution at Steady State": "VDss_Lombardo",
+    "TPSA": "TPSA_pubchem",
+    "XLogP": "XLogP_pubchem",
+    "Molecular Weight": "MolecularWeight_pubchem",
+    "Rotatable Bond Count": "RotatableBondCount_pubchem"
+}
