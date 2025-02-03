@@ -230,7 +230,7 @@ def constraint_summary(
     results_dict: dict
 ):
     constraint_name_key = ":".join(constraints)
-    unconstrained_key = "unconstrained_generation"
+    unconstrained_key = "unconstrained"
 
     lists_dict = {
         constraint: {
