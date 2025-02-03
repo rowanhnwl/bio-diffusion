@@ -229,7 +229,7 @@ def constraint_summary(
     constraints: list, 
     results_dict: dict
 ):
-    constraint_name_key = ":".join(constraints).lower()
+    constraint_name_key = ":".join(constraints)
     unconstrained_key = "unconstrained_generation"
 
     lists_dict = {
@@ -254,7 +254,7 @@ def constraint_summary(
         if unconstrained_key in k:
             for ck in results_dict[k].keys():
                 lists_dict[ck]["unconstrained"].append(results_dict[k][ck]["P(meets threshold) total"])
-        elif constraint_name_key in k:
+        elif constraint_name_key.lower() in k:
             for ck in results_dict[k].keys():
                 lists_dict[ck]["task_arithmetic"].append(results_dict[k][ck]["P(meets threshold) total"])
 
