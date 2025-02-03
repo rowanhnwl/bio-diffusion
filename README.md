@@ -20,6 +20,7 @@ Finally, change the Matplotlib version (ignore errors)
 pip install matplotlib==3.3.4 --no-deps
 pip uninstall seaborn scanpy
 pip install seaborn==0.11.0 scanpy==1.8.0
+conda install -c conda-forge numexpr=2.8.4 bottleneck=1.3.6
 ```
 
 ## Molecule Generation
