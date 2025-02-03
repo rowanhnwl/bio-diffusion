@@ -2,10 +2,18 @@ import subprocess
 import json
 import argparse
 import os
+from shutil import rmtree
 from tqdm import tqdm
 
 from eval.constraint_analysis import *
 from gen_binary_matrix import generate_binary_matrix
+from gen_single_matrix import generate_single_matrix
+
+BM_IW = 0
+BM_FW = 0
+BM_AI = 5
+BM_AM = "add"
+BM_SM = "none"
 
 def set_sdf_dirname(
     param_config,
@@ -20,7 +28,7 @@ def set_sdf_dirname(
         add_method,
         schedule_method,
         _,
-        _,
+        constraint_info,
         _
     ) = param_config
 
@@ -37,7 +45,10 @@ def set_sdf_dirname(
 
 def gen_molecule(
     param_config,
-    out_dir
+    out_dir,
+    iteration,
+    benchmark=False,
+    preset_dir=None
 ):
     (
         timesteps,
@@ -46,22 +57,32 @@ def gen_molecule(
         add_interval,
         add_method,
         schedule_method,
-        constraint_matrix,
+        matrix_path,
         constraint_info,
         molecules
     ) = param_config
     
     constraints = [list(d.keys())[0] for d in constraint_info]
     constraint_name_r = ":".join(constraints)
+    
+    with open(f"{matrix_path}/matrix.json", "r") as f:
+        matrix_dict = json.load(f)
+
+    constraint_matrix = matrix_dict["matrix"]
     n_atoms = len(constraint_matrix)
 
-    out_path_r = os.path.join(out_dir, set_sdf_dirname(param_config, constraint_name_r), set_sdf_dirname(param_config, constraint_name_r))
+    if not benchmark:
+        out_path_r = os.path.join(out_dir, set_sdf_dirname(param_config, constraint_name_r), set_sdf_dirname(param_config, constraint_name_r) + "_" + str(iteration))
+    else:
+        out_path_r = os.path.join(out_dir, preset_dir, "unconstrained_benchmark_" + str(iteration))
     out_path = f"'{out_path_r}'" # Escape ':' for hydra parsing
+
+    # Remove any existing molecules
+    if os.path.exists(out_path_r) and len(os.listdir(out_path_r)) > 0:
+        os.remove(os.path.join(out_path_r, (os.listdir(out_path_r))[0]))
 
     # Fix the constraint name for hydra parsing
     constraint_name = f"'{constraint_name_r}'"
-
-    # TO DO: HANDLE NO CONSTRAINT
 
     subprocess.run(
         f"  python3 src/mol_gen_sample.py \
@@ -87,9 +108,10 @@ def gen_molecule(
             add_interval={add_interval} \
             add_method={add_method} \
             schedule_method={schedule_method} \
-            constraint_matrix={constraint_matrix}",
+            matrix_path={matrix_path}",
             shell=True,
-            stdout=subprocess.DEVNULL # Avoid printing
+            stdout=subprocess.DEVNULL, # Avoid printing
+            stderr=subprocess.DEVNULL
     )
 
     return os.path.dirname(out_path_r), constraint_name_r
@@ -123,43 +145,68 @@ if __name__ == "__main__":
     eval_out_dir = config["eval_out_dir"]
     datasets_dir = config["datasets_dir"]
 
-    # Get the constraint matrix
-    if binary:
-        constraint_matrix = generate_binary_matrix(
-            constraint_info,
-            min_smiles_len,
-            datasets_dir
-        )
-
-    # Implement for single
-
-    os.mkdir("tmp_matrix")
-    tmp_dict = {}
-    tmp_dict["matrix"] = constraint_matrix
-    with open("tmp_matrix/matrix.", "w") as f:
+    n_iters = config["n_iterations"]
 
     if not os.path.exists(eval_out_dir):
         os.makedirs(eval_out_dir)
 
-    param_config = (
-        timesteps,
-        init_weight,
-        final_weight,
-        add_interval,
-        add_method,
-        schedule_method,
-        constraint_matrix,
-        constraint_info,
-        molecules
-    )
+    for n in tqdm(range(n_iters)):
+        # Get the constraint matrix
+        if binary:
+            constraint_matrix = generate_binary_matrix(
+                constraint_info,
+                min_smiles_len,
+                datasets_dir
+            )
+        else:
+            constraint_matrix = generate_single_matrix(
+                constraint_info,
+                min_smiles_len,
+                datasets_dir
+            )
 
-    #for param_config in tqdm(params_configs):
-    sdf_dir_path, constraint_name = gen_molecule(param_config, output_dir)
+        tmp_matrix_path = "tmp_matrix"
+        os.makedirs(tmp_matrix_path, exist_ok=True)
+        tmp_dict = {}
+        tmp_dict["matrix"] = constraint_matrix
+        with open(f"{tmp_matrix_path}/matrix.json", "w") as f:
+            json.dump(tmp_dict, f, indent=3)
 
-    eval_out_path = os.path.join(eval_out_dir, constraint_name + ".json")
+        param_config = (
+                timesteps,
+                init_weight,
+                final_weight,
+                add_interval,
+                add_method,
+                schedule_method,
+                tmp_matrix_path,
+                constraint_info,
+                molecules
+            )
 
-    constraint_name_list = constraint_name.split(":")
-    threshold_info = [list(d.values())[0] for d in constraint_info]
+        bm_param_config = ( # Benchmark param config
+            timesteps,
+            BM_IW,
+            BM_FW,
+            BM_AI,
+            BM_AM,
+            BM_SM,
+            tmp_matrix_path,
+            constraint_info,
+            molecules
+        )
+
+        # Generate the molecules
+        sdf_dir_path, constraint_name = gen_molecule(param_config, output_dir, n)
+        gen_molecule(bm_param_config, output_dir, n, benchmark=True, preset_dir=os.path.basename(sdf_dir_path)) # Benchmark generation
+
+        eval_out_path = os.path.join(eval_out_dir, constraint_name + ".json")
+
+        constraint_name_list = constraint_name.split(":")
+        threshold_info = [list(d.values())[0] for d in constraint_info]
+
+        # Remove the matrix file
+        rmtree(tmp_matrix_path)
 
     constraint_eval(
         constraint_name_list,

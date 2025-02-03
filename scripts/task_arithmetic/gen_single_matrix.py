@@ -13,7 +13,6 @@ from tdc.single_pred import ADME
 # import deepchem as dc
 import random
 from tqdm import tqdm
-import os
 
 def latent_space_constraint(dataset,input_latent_space_dict,constraint,constraint_val):
     # Inputs: 1) dataset (dictionary, with SMILES string/word string as key and property value as value)
@@ -122,7 +121,7 @@ def latent_space_constraint(dataset,input_latent_space_dict,constraint,constrain
                         total_norm += param_norm.item() ** 2
                 total_norm = total_norm ** (1. / 2)
             
-               # print(f'Step {n_upd:,} (N samples: {n_upd*batch_size:,}), Loss: {loss.item():.4f},  Grad: {total_norm:.4f}')
+                #print(f'Step {n_upd:,} (N samples: {n_upd*batch_size:,}), Loss: {loss.item():.4f},  Grad: {total_norm:.4f}')
                 
             # gradient clipping
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)    
@@ -218,11 +217,7 @@ def task_arithmetic(dataset_list,input_latent_space_dict_list,constraint_dict):
     
     return combined_latent_vec, test_errors_list
 
-# TEST CASE 1B: Combination of two datasets
-#constraint_dict_master = [{"Caco2 Permeability": {"threshold": -6.0,"weight": 1}},{"Lipophilicity": {"threshold": 2.0,"weight": 1}}, {"Solubility": {"threshold": 0.0, "weight": 1}}, {"Volume Distribution at Steady State": {"threshold": 5.0, "weight": 1}}, {"Acute Toxicity": {"threshold": 2.0, "weight": 1}}, {"TPSA": {"threshold": 50.0,"weight": 1}}, {"XLogP": {"threshold": -0.5, "weight": 1}}, {"Molecular Weight": {"threshold": 50.0, "weight": 1}}, {"Rotatable Bond Count": {"threshold": 1.0, "weight": 1}}]
-#dataset_names_master = ["Caco2_Wang","Lipophilicity_AstraZeneca", "Solubility_AqSolDB", "LD50_Zhu", "VDss_Lombardo", "TPSA_pubchem", "XLogP_pubchem", "MolecularWeight_pubchem", "RotatableBondCount_pubchem"]
-
-def generate_binary_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
+def generate_single_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
 
     constraint_names = [list(d.keys())[0] for d in constraint_dict_master]
 
@@ -233,83 +228,68 @@ def generate_binary_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
     dataset_names_master = [constraints_to_datasets[c] for c in constraint_names]
 
     for i in range(len(dataset_names_master)):
-        for j in range(len(dataset_names_master)):
-            if i != j and ('pubchem' not in dataset_names_master[i] or 'pubchem' not in dataset_names_master[j]):
+        #print("Generating the constraint matrix...")
+        #print('Constraint: ', list(constraint_dict_master[i].keys())[0])
+        constraint_dict = constraint_dict_master[i]
+        dataset_names = [dataset_names_master[i]]
 
-                constraint_name_1 = list(constraint_dict_master[i].keys())[0]
-                constraint_name_2 = list(constraint_dict_master[j].keys())[0]
+        dataset_dicts = []
+        input_latent_space_dicts = []
 
-                # print("GENERATING THE TASK ARITHMETIC MATRIX")
-                # print('Constraint 1: ', constraint_name_1)
-                # print('Constraint 2: ', constraint_name_2)
-                constraint_dict = constraint_dict_master[i].copy()
-                for key, value in constraint_dict_master[j].items():
-                    constraint_dict[key] = value
-                #print(constraint_dict)
-                dataset_names = [dataset_names_master[i],dataset_names_master[j]]
+        with open(f'{dataset_dir}/latent/updated_pubchem_latent_space_dict.json','r') as pubchem_latent_json:
+            pubchem_latent_dict = json.load(pubchem_latent_json)
+        for dataset_name in dataset_names:
+            if 'pubchem' in dataset_name:
+                with open(f'{dataset_dir}/updated_{dataset_name}_new_dataset.json','r') as d:
+                    dataset_dict = json.load(d)
+                list_of_bad_smi = []
+                for smi in dataset_dict.keys():
+                    if dataset_dict[smi][0] == {"CID": 0}:
+                        list_of_bad_smi.append(smi)
+                    elif smi not in pubchem_latent_dict.keys():
+                        list_of_bad_smi.append(smi)
+                    elif dataset_name.split('_')[0] not in dataset_dict[smi][0].keys():
+                        list_of_bad_smi.append(smi)
+                    elif len(smi) < min_smiles_len: # get rid of molecules that are too small
+                        list_of_bad_smi.append(smi)
+                for smi in list_of_bad_smi:
+                    del dataset_dict[smi]
+                fixed_dataset = {}
+                for smi in dataset_dict.keys():
+                    prop_val = dataset_dict[smi][0][dataset_name.split('_')[0]]
+                    fixed_dataset[smi] = float(prop_val)
+                fixed_dataset_json = json.dumps(fixed_dataset)
+                with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as d:
+                    d.write(fixed_dataset_json)
+                dataset_dicts.append(f'{dataset_dir}/{dataset_name}_fixed_dataset.json')
+                input_latent_space_dicts.append(f'{dataset_dir}/latent/updated_pubchem_latent_space_dict.json')
+            else:
+                with open(f'{dataset_dir}/updated_{dataset_name}_new_dataset.json','r') as d:
+                    dataset_dict = json.load(d)
+                list_of_bad_smi = []
+                for smi in dataset_dict.keys():
+                    if len(smi) < min_smiles_len:
+                        list_of_bad_smi.append(smi)
+                for smi in list_of_bad_smi:
+                    del dataset_dict[smi]
+                fixed_dataset_json = json.dumps(dataset_dict)
+                with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as d:
+                    d.write(fixed_dataset_json)
+                input_latent_space_dicts.append(f'{dataset_dir}/latent/updated_{dataset_name}_latent_space_dict.json')
+                dataset_dicts.append(f'{dataset_dir}/{dataset_name}_fixed_dataset.json')            
+        datasets = []
+        input_latent_spaces = []
+        for dataset_filename in dataset_dicts:
+            with open(dataset_filename,'r') as d:
+                dataset_dict = json.load(d)
+            datasets.append(dataset_dict)
+        for latent_filename in input_latent_space_dicts:
+            with open(latent_filename,'r') as l:
+                latent_dict = json.load(l)
+            for smi in list_of_bad_smi:
+                if smi in latent_dict.keys():
+                    del latent_dict[smi]
+            input_latent_spaces.append(latent_dict)
+        combined_latent_vec, test_errors_list = task_arithmetic(datasets,input_latent_spaces,constraint_dict)
 
-                dataset_dicts = []
-                input_latent_space_dicts = []
-                bad_smi_dict = {}
-
-                with open(f'{dataset_dir}/latent/updated_pubchem_latent_space_dict.json','r') as pubchem_latent_json:
-                    pubchem_latent_dict = json.load(pubchem_latent_json)
-                for i in range(len(dataset_names)):
-                    dataset_name = dataset_names[i]
-                    if 'pubchem' in dataset_name:
-                        with open(f'{dataset_dir}/updated_{dataset_name}_new_dataset.json','r') as d:
-                            dataset_dict = json.load(d)
-                        list_of_bad_smi = []
-                        for smi in dataset_dict.keys():
-                            if dataset_dict[smi][0] == {"CID": 0}:
-                                list_of_bad_smi.append(smi)
-                            elif smi not in pubchem_latent_dict.keys():
-                                list_of_bad_smi.append(smi)
-                            elif dataset_name.split('_')[0] not in dataset_dict[smi][0].keys():
-                                list_of_bad_smi.append(smi)
-                            elif len(smi) < min_smiles_len: # get rid of molecules that are too small
-                                list_of_bad_smi.append(smi)
-                        for smi in list_of_bad_smi:
-                            del dataset_dict[smi]
-                        fixed_dataset = {}
-                        for smi in dataset_dict.keys():
-                            prop_val = dataset_dict[smi][0][dataset_name.split('_')[0]]
-                            fixed_dataset[smi] = float(prop_val)
-                        fixed_dataset_json = json.dumps(fixed_dataset)
-                        with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as d:
-                            d.write(fixed_dataset_json)
-                        dataset_dicts.append(f'{dataset_dir}/{dataset_name}_fixed_dataset.json')
-                        input_latent_space_dicts.append(f'{dataset_dir}/latent/updated_pubchem_latent_space_dict.json')
-                        bad_smi_dict[f'{dataset_dir}/latent/updated_pubchem_latent_space_dict.json'] = list_of_bad_smi
-                    else:
-                        with open(f'{dataset_dir}/updated_{dataset_name}_new_dataset.json','r') as d:
-                            dataset_dict = json.load(d)
-                        list_of_bad_smi = []
-                        for smi in dataset_dict.keys():
-                            if len(smi) < min_smiles_len:
-                                list_of_bad_smi.append(smi)
-                        for smi in list_of_bad_smi:
-                            del dataset_dict[smi]
-                        fixed_dataset_json = json.dumps(dataset_dict)
-                        with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as d:
-                            d.write(fixed_dataset_json)
-                        input_latent_space_dicts.append(f'{dataset_dir}/latent/updated_{dataset_name}_latent_space_dict.json')
-                        dataset_dicts.append(f'{dataset_dir}/{dataset_name}_fixed_dataset.json')
-                        bad_smi_dict[f'{dataset_dir}/latent/updated_{dataset_name}_latent_space_dict.json'] = list_of_bad_smi
-                datasets = []
-                input_latent_spaces = []
-                for dataset_filename in dataset_dicts:
-                    with open(dataset_filename,'r') as d:
-                        dataset_dict = json.load(d)
-                    datasets.append(dataset_dict)
-                for latent_filename in input_latent_space_dicts:
-                    with open(latent_filename,'r') as l:
-                        latent_dict = json.load(l)
-                    list_of_bad_smi = bad_smi_dict[latent_filename]
-                    for smi in list_of_bad_smi:
-                        if smi in latent_dict.keys():
-                            del latent_dict[smi]
-                    input_latent_spaces.append(latent_dict)
-                combined_latent_vec, test_errors_list = task_arithmetic(datasets,input_latent_spaces,constraint_dict)        
-
-                return combined_latent_vec.tolist()
+    return combined_latent_vec.tolist()

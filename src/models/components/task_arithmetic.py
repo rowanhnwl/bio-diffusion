@@ -77,12 +77,17 @@ def get_rand_ta_mat(
     return z_ta
 
 def get_preset_ta_mat(
-    constraint_matrix: list,
+    matrix_path: str,
     device: str
 ):
     """
-    Create a preset matrix for testing purposes
+    Get the constraint matrix
     """
+
+    with open(f"{matrix_path}/matrix.json", "r") as f:
+        matrix_dict = json.load(f)
+
+    constraint_matrix = list(matrix_dict.values())[0]
 
     # Preset matrix
     ta_nonzero_mean = torch.tensor(

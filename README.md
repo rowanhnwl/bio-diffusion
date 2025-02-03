@@ -6,47 +6,73 @@ Latent space steering to constrain molecular generation. Based on [*In-context V
 The task arithmetic logic is implemented for the QM9 Unconditional Generation task, specified in the original GCDM repository. Other parameters are listed [here](https://github.com/BioinfoMachineLearning/bio-diffusion?tab=readme-ov-file#generate-new-unconditional-3d-molecules-qm9).
 
 ## Installation
-Follow the steps outlined in the original repository
+First, follow the steps outlined in the original repository (up to the end of the **Installation guide** section)
+
+Next, change the Matplotlib version (ignore errors)
+
+```
+pip install matplotlib==3.3.4 --no-deps
+pip uninstall seaborn scanpy
+pip install seaborn==0.11.0 scanpy==1.8.0
+```
+
+Finally, install additional packages
+
+```
+pip install pubchempy transformers pytdc
+```
 
 ## Molecule Generation
-
-### Multiple constraints
-Running generation across multiple constraints can be done by creating a config file with the following form
+Create a config file with the following format
 
 ```
 {
-    "timesteps": ...,
-    "molecules": ...,
-    "init_weight": ...,
-    "final_weight": ...,
-    "add_interval": ...,
-    "add_method": ...,
-    "schedule_method": ...,
-    "constraint_matrices_json_paths": [
-        ...
+    "timesteps": 1000,
+    "molecules": 250,
+    "init_weight": 0.75,
+    "final_weight": 0.01,
+    "add_interval": 5,
+    "add_method": "mean",
+    "schedule_method": "exp",
+    "constraint_info": [
+        {
+            "Caco2 Permeability": {
+                "weight": 5,
+                "threshold": -6.0,
+                "bound": "lower"
+            }
+        },
+        {
+            "TPSA": {
+                "weight": 1,
+                "threshold": 50.0,
+                "bound": "upper"
+            }
+        }
     ],
-    "output_dir": ...,
-    "eval_out_dir": ...,
-    "datasets_dir": ...,
+    "output_dir": "output/task_arithmetic_molecules",
+    "eval_out_dir": "task_arithmetic_eval/",
+    "datasets_dir": "eval_datasets",
+    "min_train_smiles_length": 20,
+    "n_iterations": 3
 }
 ```
 
-`output_dir`: Output path of the SDF files
-`eval_out_dir`: Output path of the evaluation results
-`datasets_dir`: Path to the TDC datasets for evaluation
+Note that the above example uses the optimal hyperparameters. The only fields that should be changed are:
 
-There is a default config with the best parameters at `configs/task_arithmetic/gen/best_params.json`. This config is set up to evaluate on all binary constraint combinations, but feel free to change the list accordingly.
+`constraint_info`: Contains all constraint-related parameters \
+`output_dir`: Output directory of SDF files containing the RDKit molecules \
+`min_train_smiles_length`: Higher -> more atoms per molecule \
+`n_iterations`: The number of iterations (default `n=3`)
 
-The command to run based on the above config is
+Generation can be run with the following command
+
 ```
-python scripts/task_arithmetic/ta_multi_constraint.py --config configs/task_arithmetic/gen/best_params.json
+python scripts/task_arithmetic/ta_generate.py --config <PATH_TO_CONFIG>
 ```
-
-### Changing thresholds
-After retraining with the new thresholds and weights (in the [task arithmetic repository](https://github.com/d-subramanian/taskarithmetic)), make sure to **also** change the thresholds and weights in `src/models/components/json/thresholds.json`
 
 ### Evaluation output
-For each constraint matrix, there will be a corresponding output JSON that shows how the generated molecules perform with respect to the constraint and threshold.
+The output JSON will report the performance for each iteration (for both task arithmetic and unconstrained), along with a `summary` dictionary that contains the aggregate means and standard deviations.
 
 ### Grid search for molecule generation
 To run a grid search, create a JSON config with the following form

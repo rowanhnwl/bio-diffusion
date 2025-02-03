@@ -9,7 +9,7 @@
     "constraint_info": [
         {
             "Caco2 Permeability": {
-                "weight": 1,
+                "weight": 5,
                 "threshold": -6.0,
                 "bound": "lower"
             }
@@ -22,8 +22,9 @@
             }
         }
     ],
-    "output_dir": "task_arithmetic_molecules",
+    "output_dir": "output/task_arithmetic_molecules",
     "eval_out_dir": "task_arithmetic_eval/test",
     "datasets_dir": "eval_datasets",
-    "min_train_smiles_length": 20
+    "min_train_smiles_length": 20,
+    "n_iterations": 3
 }

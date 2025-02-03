@@ -1337,12 +1337,12 @@ class EquivariantVariationalDiffusion(nn.Module):
             add_interval,
             add_method,
             schedule_method,
-            constraint_matrix
+            matrix_path
         ) = task_arithmetic_params
 
         # TASK ARITHMETIC: Create a task arithmetic vector for testing and add it to z0
         z_ta = ta.get_preset_ta_mat(
-            constraint_matrix=constraint_matrix,
+            matrix_path=matrix_path,
             device=z.device
         )
         w_ta = ta.get_scheduled_weight(

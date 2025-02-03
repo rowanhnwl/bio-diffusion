@@ -164,11 +164,17 @@ def eval_dataset(
     threshold: float,
     datasets_dir: str
 ):
+    
+    with open("eval_datasets/convert/constraint_to_dataset.json", "r") as f:
+        constraint_to_dataset = json.load(f)
+
+    constraint_dataset_substring = constraint_to_dataset[constraint]
+
     # Get the dataset file name
     dataset_names = os.listdir(datasets_dir)
     dataset_filename = ""
     for dname in dataset_names:
-        if constraint in dname:
+        if constraint_dataset_substring in dname:
             dataset_filename = dname
 
     assert dataset_filename != "", "No corresponding dataset found"
@@ -219,13 +225,55 @@ def get_multi_constraint_success_rate(
 
     return good_count / n_molecules
 
+def constraint_summary(
+    constraints: list, 
+    results_dict: dict
+):
+    constraint_name_key = ":".join(constraints).lower()
+    unconstrained_key = "unconstrained_generation"
+
+    lists_dict = {
+        constraint: {
+            "unconstrained": [],
+            "task_arithmetic": []
+        } for constraint in constraints
+    }
+    if len(constraints) > 1:
+        lists_dict[constraint_name_key] = {
+            "unconstrained": [],
+            "task_arithmetic": []
+        }
+
+    summary_dict = {}
+    for constraint in constraints:
+        summary_dict[constraint] = {}
+    if len(constraints) > 1:
+        summary_dict[constraint_name_key] = {}
+
+    for k in results_dict.keys():
+        if unconstrained_key in k:
+            for ck in results_dict[k].keys():
+                lists_dict[ck]["unconstrained"].append(results_dict[k][ck]["P(meets threshold) total"])
+        elif constraint_name_key in k:
+            for ck in results_dict[k].keys():
+                lists_dict[ck]["task_arithmetic"].append(results_dict[k][ck]["P(meets threshold) total"])
+
+    for k in lists_dict.keys():
+        summary_dict[k]["unconstrained_mean"] = np.mean(lists_dict[k]["unconstrained"])
+        summary_dict[k]["unconstrained_std"] = np.std(lists_dict[k]["unconstrained"])
+        summary_dict[k]["task_arithmetic_mean"] = np.mean(lists_dict[k]["task_arithmetic"])
+        summary_dict[k]["task_arithmetic_std"] = np.std(lists_dict[k]["task_arithmetic"])
+
+    results_dict["summary"] = summary_dict
+
 # Function to demultiplex the constraint
 def constraint_eval(
     constraints: list,
     threshold_info_list: list,
     sdf_dir_path: str,
     datasets_dir: str,
-    out_path: str
+    out_path: str,
+    total_molecules: int=250
 ):
     
     sdf_dirs = os.listdir(sdf_dir_path)
@@ -255,6 +303,7 @@ def constraint_eval(
 
             threshold = threshold_info["threshold"]
             bound_type = threshold_info["bound"] # Upper or lower
+            weight = threshold_info["weight"]
 
             if len(smiles) == 0:
                 pass
@@ -290,7 +339,8 @@ def constraint_eval(
                 n_passing = np.sum(list(results_dict.values()))
 
                 out_dict[dir][constraint] = {
-                    "P(meets threshold)": n_passing / len(smiles),
+                    "P(meets threshold) distinct": n_passing / len(smiles),
+                    "P(meets threshold) total": n_passing / total_molecules,
                     "n_distinct": len(smiles),
                     "Threshold": threshold,
                     "Bound type": bound_type
@@ -299,15 +349,26 @@ def constraint_eval(
 
                 out_dict[dir][constraint] = {
                     "P(meets threshold)": 0,
+                    "P(meets threshold) total": n_passing / total_molecules,
                     "n_distinct": 0,
                     "Threshold": threshold,
                     "Bound type": bound_type
                 }
 
+            if dir != "unconstrained_benchmark":
+                out_dict[dir][constraint]["Weight"] = weight
+
         # Create a new field to show the success rate across BOTH constraints
         if len(constraints) > 1:
+            multi_constraint_p = get_multi_constraint_success_rate(results_dicts, len(smiles))
+
             joined_constraint_name = ":".join(constraints)
-            out_dict[dir][joined_constraint_name] = get_multi_constraint_success_rate(results_dicts, len(smiles))
+            out_dict[dir][joined_constraint_name] = {
+                "P(meets threshold) distinct": multi_constraint_p,
+                "P(meets threshold) total": multi_constraint_p * (len(smiles) / total_molecules)
+            }
+
+    constraint_summary(constraints, out_dict)
 
     with open(out_path, "w") as f:
         json.dump(out_dict, f, indent=3)

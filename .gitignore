@@ -182,6 +182,7 @@ task_arithmetic_eval
 binary_analyses
 scripts/task_arithmetic/eval/plotting
 figs
+tmp_matrix
 
 # NFS
 .nfs*
