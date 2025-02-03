@@ -8,18 +8,18 @@ The task arithmetic logic is implemented for the QM9 Unconditional Generation ta
 ## Installation
 First, follow the steps outlined in the original repository (up to the end of the **Installation guide** section)
 
-Next, change the Matplotlib version (ignore errors)
+Next, install additional packages
+
+```
+pip install pubchempy transformers pytdc
+```
+
+Finally, change the Matplotlib version (ignore errors)
 
 ```
 pip install matplotlib==3.3.4 --no-deps
 pip uninstall seaborn scanpy
 pip install seaborn==0.11.0 scanpy==1.8.0
-```
-
-Finally, install additional packages
-
-```
-pip install pubchempy transformers pytdc
 ```
 
 ## Molecule Generation
