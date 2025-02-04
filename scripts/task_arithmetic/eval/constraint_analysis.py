@@ -296,7 +296,7 @@ def constraint_eval(
         except:
             print("No available SMILES strings")
             smiles = []
-    
+
         for i, constraint in enumerate(constraints):
 
             threshold_info = threshold_info_list[i]
@@ -316,6 +316,7 @@ def constraint_eval(
                 )
 
                 results_dicts.append(deepcopy(results_dict))
+
             else: # NEED TO USE STRUCTURAL SIMILARITY
 
                 # Split the dataset by passing/failing the threshold

@@ -8,17 +8,17 @@
     "schedule_method": "exp",
     "constraint_info": [
         {
-            "Caco2 Permeability": {
-                "weight": 5,
-                "threshold": -6.0,
-                "bound": "lower"
-            }
-        },
-        {
             "TPSA": {
                 "weight": 1,
                 "threshold": 50.0,
                 "bound": "upper"
+            }
+        },
+        {
+            "Caco2 Permeability": {
+                "weight": 1,
+                "threshold": -6.0,
+                "bound": "lower"
             }
         }
     ],
