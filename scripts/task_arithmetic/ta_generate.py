@@ -4,6 +4,7 @@ import argparse
 import os
 from shutil import rmtree
 from tqdm import tqdm
+import time
 
 from eval.constraint_analysis import *
 from gen_binary_matrix import generate_binary_matrix
@@ -150,6 +151,8 @@ if __name__ == "__main__":
 
     n_iters = config["n_iterations"]
 
+    threshold_info = [list(d.values())[0] for d in constraint_info]
+
     if not os.path.exists(eval_out_dir):
         os.makedirs(eval_out_dir)
 
@@ -206,10 +209,14 @@ if __name__ == "__main__":
         eval_out_path = os.path.join(eval_out_dir, config_name + "_" + constraint_name + ".json")
 
         constraint_name_list = constraint_name.split(":")
-        threshold_info = [list(d.values())[0] for d in constraint_info]
+
+        # Sync the filesystem and wait
+        os.sync()
+        time.sleep(1)
 
         # Remove the matrix file
-        rmtree(tmp_matrix_path)
+        if os.path.exists(tmp_matrix_path):
+            rmtree(tmp_matrix_path)
 
     constraint_eval(
         constraint_name_list,
