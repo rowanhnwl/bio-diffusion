@@ -47,6 +47,7 @@ def gen_molecule(
     param_config,
     out_dir,
     iteration,
+    config_name,
     benchmark=False,
     preset_dir=None
 ):
@@ -72,7 +73,7 @@ def gen_molecule(
     n_atoms = len(constraint_matrix)
 
     if not benchmark:
-        out_path_r = os.path.join(out_dir, set_sdf_dirname(param_config, constraint_name_r), set_sdf_dirname(param_config, constraint_name_r) + "_" + str(iteration))
+        out_path_r = os.path.join(out_dir, config_name + "_" + set_sdf_dirname(param_config, constraint_name_r), set_sdf_dirname(param_config, constraint_name_r) + "_" + str(iteration))
     else:
         out_path_r = os.path.join(out_dir, preset_dir, "unconstrained_benchmark_" + str(iteration))
     out_path = f"'{out_path_r}'" # Escape ':' for hydra parsing
@@ -125,6 +126,8 @@ if __name__ == "__main__":
 
     with open(config_path, "r") as cf:
         config = json.load(cf)
+
+    config_name = os.path.basename(config_path).removesuffix(".json")
 
     constraint_info = config["constraint_info"]
     min_smiles_len = config["min_train_smiles_length"]
@@ -197,10 +200,10 @@ if __name__ == "__main__":
         )
 
         # Generate the molecules
-        sdf_dir_path, constraint_name = gen_molecule(param_config, output_dir, n)
-        gen_molecule(bm_param_config, output_dir, n, benchmark=True, preset_dir=os.path.basename(sdf_dir_path)) # Benchmark generation
+        sdf_dir_path, constraint_name = gen_molecule(param_config, output_dir, n, config_name)
+        gen_molecule(bm_param_config, output_dir, n, config_name, benchmark=True, preset_dir=os.path.basename(sdf_dir_path)) # Benchmark generation
 
-        eval_out_path = os.path.join(eval_out_dir, constraint_name + ".json")
+        eval_out_path = os.path.join(eval_out_dir, config_name + "_" + constraint_name + ".json")
 
         constraint_name_list = constraint_name.split(":")
         threshold_info = [list(d.values())[0] for d in constraint_info]
