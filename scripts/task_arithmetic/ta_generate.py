@@ -178,6 +178,10 @@ if __name__ == "__main__":
         with open(f"{tmp_matrix_path}/matrix.json", "w") as f:
             json.dump(tmp_dict, f, indent=3)
 
+        # Sync the filesystem and wait
+        os.sync()
+        time.sleep(1)
+
         param_config = (
                 timesteps,
                 init_weight,
@@ -209,10 +213,6 @@ if __name__ == "__main__":
         eval_out_path = os.path.join(eval_out_dir, config_name + "_" + constraint_name + ".json")
 
         constraint_name_list = constraint_name.split(":")
-
-        # Sync the filesystem and wait
-        os.sync()
-        time.sleep(1)
 
         # Remove the matrix file
         if os.path.exists(tmp_matrix_path):
