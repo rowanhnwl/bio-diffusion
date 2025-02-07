@@ -6,6 +6,8 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import AllChem
 from rdkit import DataStructs
 
+from scipy.stats import ttest_ind
+
 import numpy as np
 
 import argparse
@@ -174,7 +176,7 @@ def eval_dataset(
     dataset_names = os.listdir(datasets_dir)
     dataset_filename = ""
     for dname in dataset_names:
-        if constraint_dataset_substring in dname:
+        if constraint_dataset_substring in dname and "fixed" not in dname:
             dataset_filename = dname
 
     assert dataset_filename != "", "No corresponding dataset found"
@@ -265,6 +267,40 @@ def constraint_summary(
         summary_dict[k]["task_arithmetic_std"] = np.std(lists_dict[k]["task_arithmetic"])
 
     results_dict["summary"] = summary_dict
+
+def compute_ttest_scores(results_dict):
+    ttest_dict = {
+        "unconstrained": {},
+        "constrained": {}
+    }
+
+    constraint_keys = set()
+
+    for k in results_dict.keys():
+        if "unconstrained" in k:
+            for constraint_key in results_dict[k]:
+                constraint_keys.add(constraint_key)
+                p_total = results_dict[k][constraint_key]["P(meets threshold) total"]
+                try:
+                    ttest_dict["unconstrained"][constraint_key].append(p_total)
+                except:
+                    ttest_dict["unconstrained"][constraint_key] = [p_total]
+        elif k != "summary":
+            for constraint_key in results_dict[k]:
+                constraint_keys.add(constraint_key)
+                p_total = results_dict[k][constraint_key]["P(meets threshold) total"]
+                try:
+                    ttest_dict["constrained"][constraint_key].append(p_total)
+                except:
+                    ttest_dict["constrained"][constraint_key] = [p_total]
+
+    for constraint_key in constraint_keys:
+        constrained_p_totals = ttest_dict["constrained"][constraint_key]
+        unconstrained_p_totals = ttest_dict["unconstrained"][constraint_key]
+
+        _, pval = ttest_ind(constrained_p_totals, unconstrained_p_totals, equal_var=False)
+
+        results_dict["summary"][constraint_key]["p_val"] = pval
 
 # Function to demultiplex the constraint
 def constraint_eval(
@@ -370,6 +406,7 @@ def constraint_eval(
             }
 
     constraint_summary(constraints, out_dict)
+    compute_ttest_scores(out_dict)
 
     with open(out_path, "w") as f:
         json.dump(out_dict, f, indent=3)

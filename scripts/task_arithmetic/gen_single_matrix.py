@@ -258,9 +258,10 @@ def generate_single_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
                 for smi in dataset_dict.keys():
                     prop_val = dataset_dict[smi][0][dataset_name.split('_')[0]]
                     fixed_dataset[smi] = float(prop_val)
-                fixed_dataset_json = json.dumps(fixed_dataset)
-                with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as d:
-                    d.write(fixed_dataset_json)
+
+                with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as f:
+                    json.dump(fixed_dataset, f, indent=3)
+
                 dataset_dicts.append(f'{dataset_dir}/{dataset_name}_fixed_dataset.json')
                 input_latent_space_dicts.append(f'{dataset_dir}/latent/updated_pubchem_latent_space_dict.json')
             else:
@@ -272,9 +273,10 @@ def generate_single_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
                         list_of_bad_smi.append(smi)
                 for smi in list_of_bad_smi:
                     del dataset_dict[smi]
-                fixed_dataset_json = json.dumps(dataset_dict)
-                with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as d:
-                    d.write(fixed_dataset_json)
+
+                with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as f:
+                    json.dump(dataset_dict, f, indent=3)
+                    
                 input_latent_space_dicts.append(f'{dataset_dir}/latent/updated_{dataset_name}_latent_space_dict.json')
                 dataset_dicts.append(f'{dataset_dir}/{dataset_name}_fixed_dataset.json')            
         datasets = []
