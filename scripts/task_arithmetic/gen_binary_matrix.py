@@ -9,7 +9,7 @@ from torch import nn
 # from transformers import AutoModelForCausalLM
 import numpy as np
 import json
-from tdc.single_pred import ADME
+
 # import deepchem as dc
 import random
 from tqdm import tqdm
@@ -222,7 +222,18 @@ def task_arithmetic(dataset_list,input_latent_space_dict_list,constraint_dict):
 #constraint_dict_master = [{"Caco2 Permeability": {"threshold": -6.0,"weight": 1}},{"Lipophilicity": {"threshold": 2.0,"weight": 1}}, {"Solubility": {"threshold": 0.0, "weight": 1}}, {"Volume Distribution at Steady State": {"threshold": 5.0, "weight": 1}}, {"Acute Toxicity": {"threshold": 2.0, "weight": 1}}, {"TPSA": {"threshold": 50.0,"weight": 1}}, {"XLogP": {"threshold": -0.5, "weight": 1}}, {"Molecular Weight": {"threshold": 50.0, "weight": 1}}, {"Rotatable Bond Count": {"threshold": 1.0, "weight": 1}}]
 #dataset_names_master = ["Caco2_Wang","Lipophilicity_AstraZeneca", "Solubility_AqSolDB", "LD50_Zhu", "VDss_Lombardo", "TPSA_pubchem", "XLogP_pubchem", "MolecularWeight_pubchem", "RotatableBondCount_pubchem"]
 
+def rm_fixed_datasets(dataset_dir):
+    dataset_names = os.listdir(dataset_dir)
+
+    for dname in dataset_names:
+        full_path = os.path.join(dataset_dir, dname)
+
+        if "fixed" in dname:
+            os.remove(full_path)
+
 def generate_binary_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
+
+    rm_fixed_datasets(dataset_dir)
 
     constraint_names = [list(d.keys())[0] for d in constraint_dict_master]
 

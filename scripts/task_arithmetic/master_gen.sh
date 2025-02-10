@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CONFIG_DIR="configs/task_arithmetic/gen"
+CONFIG_DIR="configs/task_arithmetic/gen/fig1_binaries"
 PYTHON_SCRIPT="scripts/task_arithmetic/ta_generate.py"
 
 for config_file in "$CONFIG_DIR"/*; do

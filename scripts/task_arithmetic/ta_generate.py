@@ -7,7 +7,7 @@ from tqdm import tqdm
 import time
 
 from eval.constraint_analysis import *
-from gen_binary_matrix import generate_binary_matrix
+from gen_binary_matrix import generate_binary_matrix, rm_fixed_datasets
 from gen_single_matrix import generate_single_matrix
 
 BM_IW = 0
@@ -218,6 +218,10 @@ if __name__ == "__main__":
         if os.path.exists(tmp_matrix_path):
             rmtree(tmp_matrix_path)
 
+    # Sync the filesystem and wait
+    os.sync()
+    time.sleep(1)
+
     constraint_eval(
         constraint_name_list,
         threshold_info,
@@ -225,3 +229,5 @@ if __name__ == "__main__":
         datasets_dir,
         eval_out_path
     )
+
+    rm_fixed_datasets(datasets_dir)

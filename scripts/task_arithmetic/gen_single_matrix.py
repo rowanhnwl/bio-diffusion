@@ -9,10 +9,12 @@ from torch import nn
 # from transformers import AutoModelForCausalLM
 import numpy as np
 import json
-from tdc.single_pred import ADME
+
 # import deepchem as dc
 import random
 from tqdm import tqdm
+
+import os
 
 def latent_space_constraint(dataset,input_latent_space_dict,constraint,constraint_val):
     # Inputs: 1) dataset (dictionary, with SMILES string/word string as key and property value as value)
@@ -217,7 +219,18 @@ def task_arithmetic(dataset_list,input_latent_space_dict_list,constraint_dict):
     
     return combined_latent_vec, test_errors_list
 
+def rm_fixed_datasets(dataset_dir):
+    dataset_names = os.listdir(dataset_dir)
+
+    for dname in dataset_names:
+        full_path = os.path.join(dataset_dir, dname)
+
+        if "fixed" in dname:
+            os.remove(full_path)
+
 def generate_single_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
+
+    rm_fixed_datasets(dataset_dir)
 
     constraint_names = [list(d.keys())[0] for d in constraint_dict_master]
 

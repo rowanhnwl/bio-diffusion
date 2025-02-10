@@ -11,16 +11,7 @@ First, follow the steps outlined in the original repository (up to the end of th
 Next, install additional packages
 
 ```
-pip install pubchempy transformers pytdc
-```
-
-Finally, change the Matplotlib version (ignore errors)
-
-```
-pip install matplotlib==3.3.4 --no-deps
-pip uninstall seaborn scanpy
-pip install seaborn==0.11.0 scanpy==1.8.0
-conda install -c conda-forge numexpr=2.8.4 bottleneck=1.3.6
+pip install pubchempy transformers
 ```
 
 ## Molecule Generation

@@ -183,6 +183,7 @@ binary_analyses
 scripts/task_arithmetic/eval/plotting
 figs
 tmp_matrix
+nohup.out
 
 # NFS
 .nfs*
