@@ -30,11 +30,13 @@ def set_sdf_dirname(
         schedule_method,
         _,
         constraint_info,
-        _
+        _,
+        sampled_dataset
     ) = param_config
 
     sdf_name_list = []
     sdf_name_list.append(constraint_name.lower())
+    sdf_name_list.append(sampled_dataset)
     sdf_name_list.append(f"ts-{timesteps}")
     sdf_name_list.append(f"iw-{init_weight}")
     sdf_name_list.append(f"fw-{final_weight}")
@@ -61,7 +63,8 @@ def gen_molecule(
         schedule_method,
         matrix_path,
         constraint_info,
-        molecules
+        molecules,
+        sampled_dataset
     ) = param_config
     
     constraints = [list(d.keys())[0] for d in constraint_info]
@@ -86,14 +89,19 @@ def gen_molecule(
     # Fix the constraint name for hydra parsing
     constraint_name = f"'{constraint_name_r}'"
 
+    datamodule = f"edm_{sampled_dataset.lower()}"
+    model = f"{sampled_dataset.lower()}_mol_gen_ddpm"
+    ckpt_path = "checkpoints/GEOM/Unconditional/36hq94x5_model_1_epoch_76-EMA.ckpt" if sampled_dataset == "GEOM" \
+        else "checkpoints/QM9/Unconditional/model_1_epoch_979-EMA.ckpt"
+
     subprocess.run(
         f"  python3 src/mol_gen_sample.py \
-            datamodule=edm_qm9 \
-            model=qm9_mol_gen_ddpm \
+            datamodule={datamodule} \
+            model={model} \
             logger=csv \
             trainer.accelerator=gpu \
             trainer.devices=[0] \
-            ckpt_path=\"checkpoints/QM9/Unconditional/model_1_epoch_979-EMA.ckpt\" \
+            ckpt_path=\"{ckpt_path}\" \
             num_samples={molecules} \
             num_nodes={n_atoms} \
             all_frags=true \
@@ -151,6 +159,8 @@ if __name__ == "__main__":
 
     n_iters = config["n_iterations"]
 
+    sampled_dataset = config["sampled_dataset"]
+
     threshold_info = [list(d.values())[0] for d in constraint_info]
 
     if not os.path.exists(eval_out_dir):
@@ -162,13 +172,15 @@ if __name__ == "__main__":
             constraint_matrix = generate_binary_matrix(
                 constraint_info,
                 min_smiles_len,
-                datasets_dir
+                datasets_dir,
+                sampled_dataset
             )
         else:
             constraint_matrix = generate_single_matrix(
                 constraint_info,
                 min_smiles_len,
-                datasets_dir
+                datasets_dir,
+                sampled_dataset
             )
 
         tmp_matrix_path = "tmp_matrix"
@@ -183,16 +195,17 @@ if __name__ == "__main__":
         time.sleep(1)
 
         param_config = (
-                timesteps,
-                init_weight,
-                final_weight,
-                add_interval,
-                add_method,
-                schedule_method,
-                tmp_matrix_path,
-                constraint_info,
-                molecules
-            )
+            timesteps,
+            init_weight,
+            final_weight,
+            add_interval,
+            add_method,
+            schedule_method,
+            tmp_matrix_path,
+            constraint_info,
+            molecules,
+            sampled_dataset
+        )
 
         bm_param_config = ( # Benchmark param config
             timesteps,
@@ -203,7 +216,8 @@ if __name__ == "__main__":
             BM_SM,
             tmp_matrix_path,
             constraint_info,
-            molecules
+            molecules,
+            sampled_dataset
         )
 
         # Generate the molecules
@@ -222,12 +236,14 @@ if __name__ == "__main__":
     os.sync()
     time.sleep(1)
 
+    new_datasets_dir = os.path.join(datasets_dir, sampled_dataset.lower())
+
     constraint_eval(
         constraint_name_list,
         threshold_info,
         sdf_dir_path,
-        datasets_dir,
+        new_datasets_dir,
         eval_out_path
     )
 
-    rm_fixed_datasets(datasets_dir)
+    rm_fixed_datasets(new_datasets_dir)

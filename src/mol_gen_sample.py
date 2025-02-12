@@ -192,6 +192,7 @@ def sample(cfg: DictConfig) -> Tuple[dict, dict]:
         num_resamplings=cfg.num_resamplings,
         jump_length=cfg.jump_length
     )
+
     os.makedirs(cfg.output_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%m%d%Y_%H_%M_%S")
     write_sdf_file(Path(cfg.output_dir, f"{timestamp}_mol.sdf"), molecules)

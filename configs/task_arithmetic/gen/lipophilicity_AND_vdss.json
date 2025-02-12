@@ -7,20 +7,20 @@
    "add_method": "mean",
    "schedule_method": "exp",
    "constraint_info": [
-      {
-         "Lipophilicity": {
-             "threshold": 2.0,
-             "weight": 1,
-             "bound": "lower"
-         }
-     },
-     {
-      "Volume Distribution at Steady State": {
-          "threshold": 5.0,
-          "weight": 1,
-          "bound": "upper"
-      }
-  }
+    {
+        "Lipophilicity": {
+            "threshold": 2.0,
+            "weight": 1,
+            "bound": "lower"
+        }
+    },
+    {
+        "Volume Distribution at Steady State": {
+            "threshold": 5.0,
+            "weight": 1,
+            "bound": "upper"
+        }
+    }
    ],
    "output_dir": "output/task_arithmetic_molecules",
    "eval_out_dir": "task_arithmetic_eval/test",

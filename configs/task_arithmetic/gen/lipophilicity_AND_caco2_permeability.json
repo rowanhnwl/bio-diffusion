@@ -22,9 +22,10 @@
         }
     }
    ],
-   "output_dir": "output/task_arithmetic_molecules",
-   "eval_out_dir": "task_arithmetic_eval/test",
+   "sampled_dataset": "GEOM",
+   "output_dir": "output/geom_molecules",
+   "eval_out_dir": "task_arithmetic_eval/geom",
    "datasets_dir": "eval_datasets",
    "min_train_smiles_length": 20,
-   "n_iterations": 3
+   "n_iterations": 1
 }

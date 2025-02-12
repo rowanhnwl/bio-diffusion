@@ -231,9 +231,11 @@ def rm_fixed_datasets(dataset_dir):
         if "fixed" in dname:
             os.remove(full_path)
 
-def generate_binary_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
+def generate_binary_matrix(constraint_dict_master, min_smiles_len, dataset_dir, dataset):
 
-    rm_fixed_datasets(dataset_dir)
+    new_dataset_dir = os.path.join(dataset_dir, dataset.lower())
+
+    rm_fixed_datasets(new_dataset_dir)
 
     constraint_names = [list(d.keys())[0] for d in constraint_dict_master]
 
@@ -263,12 +265,12 @@ def generate_binary_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
                 input_latent_space_dicts = []
                 bad_smi_dict = {}
 
-                with open(f'{dataset_dir}/latent/updated_pubchem_latent_space_dict.json','r') as pubchem_latent_json:
+                with open(f'{new_dataset_dir}/latent/updated_pubchem_latent_space_dict.json','r') as pubchem_latent_json:
                     pubchem_latent_dict = json.load(pubchem_latent_json)
                 for i in range(len(dataset_names)):
                     dataset_name = dataset_names[i]
                     if 'pubchem' in dataset_name:
-                        with open(f'{dataset_dir}/updated_{dataset_name}_new_dataset.json','r') as d:
+                        with open(f'{new_dataset_dir}/updated_{dataset_name}_new_dataset.json','r') as d:
                             dataset_dict = json.load(d)
                         list_of_bad_smi = []
                         for smi in dataset_dict.keys():
@@ -287,14 +289,14 @@ def generate_binary_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
                             prop_val = dataset_dict[smi][0][dataset_name.split('_')[0]]
                             fixed_dataset[smi] = float(prop_val)
                         
-                        with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as f:
+                        with open(f'{new_dataset_dir}/{dataset_name}_fixed_dataset.json','w') as f:
                             json.dump(fixed_dataset, f, indent=3)
 
-                        dataset_dicts.append(f'{dataset_dir}/{dataset_name}_fixed_dataset.json')
-                        input_latent_space_dicts.append(f'{dataset_dir}/latent/updated_pubchem_latent_space_dict.json')
-                        bad_smi_dict[f'{dataset_dir}/latent/updated_pubchem_latent_space_dict.json'] = list_of_bad_smi
+                        dataset_dicts.append(f'{new_dataset_dir}/{dataset_name}_fixed_dataset.json')
+                        input_latent_space_dicts.append(f'{new_dataset_dir}/latent/updated_pubchem_latent_space_dict.json')
+                        bad_smi_dict[f'{new_dataset_dir}/latent/updated_pubchem_latent_space_dict.json'] = list_of_bad_smi
                     else:
-                        with open(f'{dataset_dir}/updated_{dataset_name}_new_dataset.json','r') as d:
+                        with open(f'{new_dataset_dir}/updated_{dataset_name}_new_dataset.json','r') as d:
                             dataset_dict = json.load(d)
                         list_of_bad_smi = []
                         for smi in dataset_dict.keys():
@@ -303,12 +305,12 @@ def generate_binary_matrix(constraint_dict_master, min_smiles_len, dataset_dir):
                         for smi in list_of_bad_smi:
                             del dataset_dict[smi]
                         
-                        with open(f'{dataset_dir}/{dataset_name}_fixed_dataset.json','w') as f:
+                        with open(f'{new_dataset_dir}/{dataset_name}_fixed_dataset.json','w') as f:
                             json.dump(dataset_dict, f, indent=3)
 
-                        input_latent_space_dicts.append(f'{dataset_dir}/latent/updated_{dataset_name}_latent_space_dict.json')
-                        dataset_dicts.append(f'{dataset_dir}/{dataset_name}_fixed_dataset.json')
-                        bad_smi_dict[f'{dataset_dir}/latent/updated_{dataset_name}_latent_space_dict.json'] = list_of_bad_smi
+                        input_latent_space_dicts.append(f'{new_dataset_dir}/latent/updated_{dataset_name}_latent_space_dict.json')
+                        dataset_dicts.append(f'{new_dataset_dir}/{dataset_name}_fixed_dataset.json')
+                        bad_smi_dict[f'{new_dataset_dir}/latent/updated_{dataset_name}_latent_space_dict.json'] = list_of_bad_smi
                 datasets = []
                 input_latent_spaces = []
                 for dataset_filename in dataset_dicts:

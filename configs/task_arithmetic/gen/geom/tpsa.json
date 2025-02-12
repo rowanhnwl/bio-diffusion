@@ -1,0 +1,24 @@
+{
+   "timesteps": 1000,
+   "molecules": 250,
+   "init_weight": 0.75,
+   "final_weight": 0.01,
+   "add_interval": 5,
+   "add_method": "mean",
+   "schedule_method": "exp",
+   "constraint_info": [
+      {
+         "TPSA": {
+             "threshold": 50.0,
+             "weight": 1,
+             "bound": "upper"
+         }
+     }
+   ],
+   "output_dir": "output/geom_molecules",
+   "eval_out_dir": "task_arithmetic_eval/geom",
+   "datasets_dir": "eval_datasets",
+   "sampled_dataset": "GEOM",
+   "min_train_smiles_length": 20,
+   "n_iterations": 3
+}
