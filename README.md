@@ -44,6 +44,7 @@ Create a config file with the following format
     ],
     "output_dir": "output/task_arithmetic_molecules",
     "eval_out_dir": "task_arithmetic_eval/",
+    "sampled_dataset": "QM9",
     "datasets_dir": "eval_datasets",
     "min_train_smiles_length": 20,
     "n_iterations": 3
@@ -53,6 +54,7 @@ Create a config file with the following format
 Note that the above example uses the optimal hyperparameters. The only fields that should be changed are:
 
 `constraint_info`: Contains all constraint-related parameters \
+`sampled_dataset`: The dataset to emulate (QM9 or GEOM) \
 `output_dir`: Output directory of SDF files containing the RDKit molecules \
 `min_train_smiles_length`: Higher -> more atoms per molecule \
 `n_iterations`: The number of iterations (default `n=3`)
