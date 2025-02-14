@@ -6,9 +6,11 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import AllChem
 from rdkit import DataStructs
 
-sdf_path = "grid_searches/no_constraint/caco2 permeability_ts-1000_iw-0_fw-0_ai-5_am-add_sm-none/caco2 permeability_ts-1000_iw-0_fw-0_ai-5_am-add_sm-none/01272025_18_29_52_mol.sdf"
+sdf_path = "output/geom_grid_search_caco2/caco2 permeability_GEOM_ts-1000_iw-0.75_fw-0.01_ai-3_am-mean_sm-exp_caco2 permeability_GEOM_ts-1000_iw-0.75_fw-0.01_ai-3_am-mean_sm-exp/caco2 permeability_GEOM_ts-1000_iw-0.75_fw-0.01_ai-3_am-mean_sm-exp_0/02142025_12_47_44_mol.sdf"
 
 df = LoadSDF(sdf_path, smilesName='SMILES')
+
+print(df)
 
 try:
     smiles = df["SMILES"]

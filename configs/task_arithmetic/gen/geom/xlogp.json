@@ -1,5 +1,5 @@
 {
-   "timesteps": 1000,
+   "timesteps": 500,
    "molecules": 250,
    "init_weight": 0.75,
    "final_weight": 0.01,
@@ -19,6 +19,7 @@
    "eval_out_dir": "task_arithmetic_eval/geom",
    "datasets_dir": "eval_datasets",
    "sampled_dataset": "GEOM",
-   "min_train_smiles_length": 30,
-   "n_iterations": 3
+   "min_train_smiles_length": 70,
+   "n_iterations": 3,
+   "gen_unconstrained": true
 }

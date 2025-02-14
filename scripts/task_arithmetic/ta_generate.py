@@ -161,6 +161,8 @@ if __name__ == "__main__":
 
     sampled_dataset = config["sampled_dataset"]
 
+    gen_unconstrained = config["gen_unconstrained"]
+
     threshold_info = [list(d.values())[0] for d in constraint_info]
 
     if not os.path.exists(eval_out_dir):
@@ -182,6 +184,8 @@ if __name__ == "__main__":
                 datasets_dir,
                 sampled_dataset
             )
+
+        print(f"Number of atoms: {len(constraint_matrix)}")
 
         tmp_matrix_path = "tmp_matrix"
         os.makedirs(tmp_matrix_path, exist_ok=True)
@@ -222,7 +226,8 @@ if __name__ == "__main__":
 
         # Generate the molecules
         sdf_dir_path, constraint_name = gen_molecule(param_config, output_dir, n, config_name)
-        gen_molecule(bm_param_config, output_dir, n, config_name, benchmark=True, preset_dir=os.path.basename(sdf_dir_path)) # Benchmark generation
+        if gen_unconstrained:
+            gen_molecule(bm_param_config, output_dir, n, config_name, benchmark=True, preset_dir=os.path.basename(sdf_dir_path)) # Benchmark generation
 
         eval_out_path = os.path.join(eval_out_dir, config_name + "_" + constraint_name + ".json")
 
@@ -243,7 +248,8 @@ if __name__ == "__main__":
         threshold_info,
         sdf_dir_path,
         new_datasets_dir,
-        eval_out_path
+        eval_out_path,
+        gen_unconstrained
     )
 
     rm_fixed_datasets(new_datasets_dir)

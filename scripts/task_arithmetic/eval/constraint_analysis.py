@@ -152,7 +152,7 @@ def get_structure_eval(
     gen_mol_fail_sim = dict(gen_mol_fail_sim)
 
     smiles_results_dict = {smi: 0 for smi in smiles}
-    sim_thresh = 0.2
+    sim_thresh = 0.5
 
     for smi in smiles:
         if np.max(gen_mol_met_sim[smi]) >= sim_thresh:
@@ -229,7 +229,8 @@ def get_multi_constraint_success_rate(
 
 def constraint_summary(
     constraints: list, 
-    results_dict: dict
+    results_dict: dict,
+    gen_unconstrained: bool
 ):
     constraint_name_key = ":".join(constraints)
     unconstrained_key = "unconstrained"
@@ -261,8 +262,8 @@ def constraint_summary(
                 lists_dict[ck]["task_arithmetic"].append(results_dict[k][ck]["P(meets threshold) total"])
 
     for k in lists_dict.keys():
-        summary_dict[k]["unconstrained_mean"] = np.mean(lists_dict[k]["unconstrained"])
-        summary_dict[k]["unconstrained_std"] = np.std(lists_dict[k]["unconstrained"])
+        summary_dict[k]["unconstrained_mean"] = np.mean(lists_dict[k]["unconstrained"]) if gen_unconstrained else 0
+        summary_dict[k]["unconstrained_std"] = np.std(lists_dict[k]["unconstrained"]) if gen_unconstrained else 0
         summary_dict[k]["task_arithmetic_mean"] = np.mean(lists_dict[k]["task_arithmetic"])
         summary_dict[k]["task_arithmetic_std"] = np.std(lists_dict[k]["task_arithmetic"])
 
@@ -309,6 +310,7 @@ def constraint_eval(
     sdf_dir_path: str,
     datasets_dir: str,
     out_path: str,
+    gen_unconstrained: bool,
     total_molecules: int=250
 ):
     
@@ -386,7 +388,7 @@ def constraint_eval(
 
                 out_dict[dir][constraint] = {
                     "P(meets threshold)": 0,
-                    "P(meets threshold) total": n_passing / total_molecules,
+                    "P(meets threshold) total": 0,
                     "n_distinct": 0,
                     "Threshold": threshold,
                     "Bound type": bound_type
@@ -396,7 +398,7 @@ def constraint_eval(
                 out_dict[dir][constraint]["Weight"] = weight
 
         # Create a new field to show the success rate across BOTH constraints
-        if len(constraints) > 1:
+        if len(constraints) > 1 and len(smiles) > 0:
             multi_constraint_p = get_multi_constraint_success_rate(results_dicts, len(smiles))
 
             joined_constraint_name = ":".join(constraints)
@@ -404,9 +406,17 @@ def constraint_eval(
                 "P(meets threshold) distinct": multi_constraint_p,
                 "P(meets threshold) total": multi_constraint_p * (len(smiles) / total_molecules)
             }
+        elif len(smiles) == 0:
+            joined_constraint_name = ":".join(constraints)
+            out_dict[dir][joined_constraint_name] = {
+                "P(meets threshold) distinct": 0,
+                "P(meets threshold) total": 0
+            }
 
-    constraint_summary(constraints, out_dict)
-    compute_ttest_scores(out_dict)
+    constraint_summary(constraints, out_dict, gen_unconstrained)
+    
+    if gen_unconstrained:
+        compute_ttest_scores(out_dict)
 
     with open(out_path, "w") as f:
         json.dump(out_dict, f, indent=3)
